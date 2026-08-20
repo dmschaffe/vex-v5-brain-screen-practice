@@ -71,7 +71,6 @@ button.primary:hover{background:#255fc8}
 .python-snippet:hover{background:#2e628d}
 .python-reference{border-top:1px solid var(--border);margin-top:11px;padding-top:8px;font-family:Consolas,Monaco,'Courier New',monospace;font-size:.65rem;line-height:1.5;color:var(--muted)}
 .python-reference strong{font-family:Arial,Helvetica,sans-serif;color:var(--text)}
-.convert-btn{width:100%;margin-top:10px;font-size:.69rem;padding:6px}
 
 .brain-area{grid-area:brain;display:flex;justify-content:center;min-width:0}
 .brain-shell{width:100%;max-width:650px;background:linear-gradient(#59616b,#303740);border:2px solid #222a32;border-radius:27px;padding:13px;color:white;box-shadow:inset 0 1px 0 rgba(255,255,255,.1)}
@@ -221,7 +220,6 @@ canvas#v5screen{display:block;width:100%;aspect-ratio:2/1;background:#000;image-
           <div>Color.RED</div><div>Color.ORANGE</div><div>Color.YELLOW</div><div>Color.GREEN</div>
           <div>Color.BLUE</div><div>Color.PURPLE</div><div>Color.CYAN</div><div>Color.WHITE</div><div>Color.BLACK</div>
         </div>
-        <button id="blocksToPython" class="convert-btn" type="button">Copy Blocks to Python</button>
       </div>
     </aside>
 
@@ -566,10 +564,107 @@ function activeResult(){
   return mode==='python'?parsePython(pythonCode):{ops:program,errors:[]};
 }
 
+function blockExportLine(block){
+  if(block.type==='clear')return `clear_screen(${String(block.color||'black')})`;
+  if(block.type==='pen')return `set_pen_color(${String(block.color||'white')})`;
+  if(block.type==='fill')return `set_fill_color(${String(block.color||'blue')})`;
+  if(block.type==='width')return `set_pen_width(${num(block.value,2)})`;
+  if(block.type==='pixel')return `draw_pixel(${num(block.x)}, ${num(block.y)})`;
+  if(block.type==='line')return `draw_line(${num(block.x1)}, ${num(block.y1)}, ${num(block.x2)}, ${num(block.y2)})`;
+  if(block.type==='rect')return `draw_rectangle(${num(block.x)}, ${num(block.y)}, ${num(block.w)}, ${num(block.h)})`;
+  if(block.type==='circle')return `draw_circle(${num(block.x)}, ${num(block.y)}, ${num(block.r)})`;
+  return block.type;
+}
+
+function exportCodeLines(){
+  if(mode==='python'){
+    const source=String(editor?.value||pythonCode||'').replace(/\r/g,'');
+    const lines=source.split('\n');
+    return lines.length?lines:[''];
+  }
+  if(!program.length)return ['(no blocks added)'];
+  return program.map(block=>blockExportLine(block));
+}
+
+function wrapCodeLine(ctx,line,maxWidth){
+  const text=String(line??'');
+  if(!text)return [''];
+  if(ctx.measureText(text).width<=maxWidth)return [text];
+
+  const indentMatch=text.match(/^\s*/);
+  const indent=indentMatch?indentMatch[0]:'';
+  const tokens=text.split(/(\s+)/).filter(token=>token.length>0);
+  const lines=[];
+  let current='';
+
+  function pushCurrent(){
+    if(current!==''){
+      lines.push(current.replace(/\s+$/,''));
+      current='';
+    }
+  }
+
+  for(const token of tokens){
+    const candidate=current+token;
+    if(current && ctx.measureText(candidate).width>maxWidth){
+      pushCurrent();
+      current=indent+token.trimStart();
+      if(ctx.measureText(current).width>maxWidth){
+        let chunk='';
+        for(const ch of current){
+          const test=chunk+ch;
+          if(chunk && ctx.measureText(test).width>maxWidth){
+            lines.push(chunk);
+            chunk=indent+ch;
+          }else{
+            chunk=test;
+          }
+        }
+        current=chunk;
+      }
+    }else if(!current && ctx.measureText(token.trimStart()).width>maxWidth){
+      let chunk='';
+      for(const ch of token.trimStart()){
+        const test=chunk+ch;
+        if(chunk && ctx.measureText(test).width>maxWidth){
+          lines.push((lines.length?indent:'')+chunk);
+          chunk=ch;
+        }else{
+          chunk=test;
+        }
+      }
+      current=(lines.length?indent:'')+chunk;
+    }else{
+      current=candidate || token;
+    }
+  }
+  pushCurrent();
+  return lines.length?lines:[''];
+}
+
 function buildBrainExport(){
+  const rawCodeLines=exportCodeLines();
+  const codeFont='13px Consolas, "Courier New", monospace';
+  const tempCanvas=document.createElement('canvas');
+  const tempCtx=tempCanvas.getContext('2d');
+  tempCtx.font=codeFont;
+  const wrappedLines=[];
+  const maxCodeWidth=620;
+  rawCodeLines.forEach((line,index)=>{
+    const parts=wrapCodeLine(tempCtx,line,maxCodeWidth);
+    if(!parts.length){
+      wrappedLines.push({number:String(index+1),text:''});
+      return;
+    }
+    parts.forEach((part,partIndex)=>{
+      wrappedLines.push({number:partIndex===0?String(index+1):'',text:part});
+    });
+  });
+
+  const codePanelHeight=Math.max(150,70+wrappedLines.length*17+16);
   const out=document.createElement('canvas');
   out.width=720;
-  out.height=420;
+  out.height=420+codePanelHeight;
   const g=out.getContext('2d');
 
   g.fillStyle='#ffffff';
@@ -600,8 +695,6 @@ function buildBrainExport(){
 
   const screenX=130;
   const screenY=116;
-  const screenW=480;
-  const screenH=240;
 
   roundedRect(g,116,100,508,268,15);
   g.fillStyle='#080a0c';
@@ -639,8 +732,52 @@ function buildBrainExport(){
   g.textBaseline='middle';
   g.fillText('480 × 240 Brain Screen • 30 Pixel Grid',360,386);
 
+  const panelX=30;
+  const panelY=420;
+  const panelW=660;
+  const panelH=codePanelHeight-20;
+  roundedRect(g,panelX,panelY,panelW,panelH,16);
+  g.fillStyle='#f8fafc';
+  g.fill();
+  g.strokeStyle='#cbd5e1';
+  g.lineWidth=2;
+  g.stroke();
+
+  roundedRect(g,panelX,panelY,panelW,36,16);
+  g.fillStyle='#e2e8f0';
+  g.fill();
+  g.fillStyle='#111827';
+  g.font='bold 14px Arial';
+  g.textAlign='left';
+  g.textBaseline='middle';
+  g.fillText(mode==='python'?'Python Code Used':'Blocks Used',panelX+16,panelY+18);
+  g.font='12px Arial';
+  g.textAlign='right';
+  g.fillText(mode==='python'?'Mode: Python':'Mode: Blocks',panelX+panelW-16,panelY+18);
+
+  g.font=codeFont;
+  g.textBaseline='top';
+  const startY=panelY+50;
+  const lineHeight=17;
+  wrappedLines.forEach((entry,index)=>{
+    const y=startY+index*lineHeight;
+    g.fillStyle='#64748b';
+    g.textAlign='right';
+    g.fillText(entry.number,panelX+28,y);
+    g.fillStyle='#0f172a';
+    g.textAlign='left';
+    g.fillText(entry.text,panelX+44,y);
+  });
+
+  g.fillStyle='#64748b';
+  g.font='10px Arial';
+  g.textAlign='right';
+  g.textBaseline='alphabetic';
+  g.fillText('Generated from VEX V5 Brain Screen Simulator',panelX+panelW-14,panelY+panelH-10);
+
   return out;
 }
+
 
 function pushHistory(){
   history=history.slice(0,historyIndex+1);
@@ -1016,14 +1153,6 @@ editor.addEventListener('keydown',e=>{
 
 $('#blocksMode').onclick=()=>setMode('blocks');
 $('#pythonMode').onclick=()=>setMode('python');
-$('#blocksToPython').onclick=()=>{
-  pythonCode=generatePythonFromBlocks();
-  pythonTouched=true;
-  editor.value=pythonCode;
-  renderScreen();
-  scheduleAutosave();
-  notice('Blocks copied into Python.');
-};
 
 $('#runProgram').onclick=()=>{
   const result=activeResult();
@@ -1088,7 +1217,7 @@ $('#pngBtn').onclick=()=>{
     exportCanvas.toBlob(blob=>{
       if(!blob){notice('The PNG could not be created.');return}
       downloadBlob(blob,safeName()+'.png');
-      notice('PNG download started.');
+      notice('PNG with code download started.');
     },'image/png');
   }catch{
     notice('The PNG could not be created.');
