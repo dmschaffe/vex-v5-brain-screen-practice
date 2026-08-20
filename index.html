@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VEX V5 Brain Screen Programming</title>
+<style>
+:root{
+  --bg:#f4f6f8;
+  --panel:#ffffff;
+  --panel-soft:#f7f9fb;
+  --text:#1f2937;
+  --muted:#667085;
+  --border:#d7dde5;
+  --accent:#2f6feb;
+  --accent-text:#ffffff;
+  --accent-soft:#eaf2ff;
+  --screen:#4567c8;
+  --events:#d9a21b;
+  --python:#3572a5;
+  --warning:#b9770e;
+  --warning-bg:#fff7e6;
+  --error:#b42318;
+  --error-bg:#fff0ef;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif}
+body{padding:14px}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+button:disabled{opacity:.45;cursor:default}
+.hidden{display:none!important}
+
+#v5screenapp{max-width:1440px;margin:0 auto}
+.topbar{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;margin-bottom:10px}
+.heading-area{display:flex;flex-direction:column;gap:4px;min-width:240px}
+.app-title{font-size:1.05rem;font-weight:700}
+.subtitle,.small{font-size:.76rem;color:var(--muted)}
+.mode-switch{display:inline-flex;width:max-content;border:1px solid var(--border);border-radius:9px;overflow:hidden;margin-top:4px;background:var(--panel)}
+.mode-btn{border:0;padding:5px 13px;background:transparent;font-size:.75rem;color:var(--text)}
+.mode-btn.active{background:var(--accent);color:var(--accent-text)}
+.actions{display:flex;flex-wrap:wrap;gap:6px;align-items:flex-end;justify-content:flex-end}
+.actions label{font-size:.72rem;display:flex;flex-direction:column;gap:3px}
+.actions input{width:155px;border:1px solid var(--border);border-radius:8px;padding:7px 8px;background:var(--panel);color:var(--text)}
+button,.action-link{border:1px solid var(--border);border-radius:9px;background:var(--panel);padding:7px 10px;color:var(--text);text-decoration:none;display:inline-flex;align-items:center;justify-content:center;line-height:1.15}
+button:hover,.action-link:hover{background:#f1f4f8}
+button.primary{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
+button.primary:hover{background:#255fc8}
+.notice,.restore-bar{margin-bottom:10px;border:1px solid #9fc0ff;border-radius:10px;background:var(--accent-soft);padding:9px 11px;font-size:.8rem}
+.restore-bar{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.restore-actions{display:flex;gap:6px}
+
+.main-layout{display:grid;grid-template-columns:170px minmax(520px,1fr) 190px;grid-template-rows:auto auto;grid-template-areas:'toolbox brain info' 'toolbox workspace info';gap:10px;align-items:start}
+.toolbox{grid-area:toolbox;border:1px solid var(--border);border-radius:14px;background:var(--panel);padding:9px;align-self:stretch}
+.toolbox-title{font-weight:700;margin-bottom:8px}
+.category{color:#fff;border-radius:7px;padding:6px 8px;font-weight:700;font-size:.8rem;margin-bottom:7px}
+.events-cat{background:var(--events)}
+.screen-cat{background:var(--screen);margin-top:12px}
+.python-cat{background:var(--python)}
+.hat-tool{background:var(--events);color:#fff;padding:8px;border-radius:9px;font-size:.76rem;font-weight:700}
+.toolblock{display:block;width:100%;margin-top:7px;border:0;background:var(--screen);color:white;text-align:left;font-size:.73rem;font-weight:700;padding:8px;border-radius:6px;box-shadow:0 2px 0 rgba(0,0,0,.25)}
+.toolblock:hover{background:#3f5db5}
+.toolblock span{font-weight:400;opacity:.86}
+.toolblock b{background:white;color:#26334b;border-radius:4px;padding:1px 4px;font-weight:500}
+.mini-swatch,.swatch,.block-swatch{display:inline-block;border-radius:50%;border:1px solid rgba(0,0,0,.5);vertical-align:middle;flex:0 0 auto}
+.mini-swatch{width:12px;height:12px}
+.swatch{width:14px;height:14px}
+.block-swatch{width:15px;height:15px}
+.tool-help,.python-help{margin-top:10px;color:var(--muted);font-size:.69rem;line-height:1.35}
+.python-snippet{display:block;width:100%;text-align:left;justify-content:flex-start;margin-top:6px;padding:7px;border-radius:6px;font-family:Consolas,Monaco,'Courier New',monospace;font-size:.66rem;background:var(--python);color:white;border:0}
+.python-snippet:hover{background:#2e628d}
+.python-reference{border-top:1px solid var(--border);margin-top:11px;padding-top:8px;font-family:Consolas,Monaco,'Courier New',monospace;font-size:.65rem;line-height:1.5;color:var(--muted)}
+.python-reference strong{font-family:Arial,Helvetica,sans-serif;color:var(--text)}
+.convert-btn{width:100%;margin-top:10px;font-size:.69rem;padding:6px}
+
+.brain-area{grid-area:brain;display:flex;justify-content:center;min-width:0}
+.brain-shell{width:100%;max-width:650px;background:linear-gradient(#59616b,#303740);border:2px solid #222a32;border-radius:27px;padding:13px;color:white;box-shadow:inset 0 1px 0 rgba(255,255,255,.1)}
+.brain-labels{display:flex;justify-content:space-between;align-items:center;font-size:.7rem;letter-spacing:.04em;margin-bottom:6px;gap:8px}
+.v5-mark,.preview-badge{background:#20262e;border:1px solid #707984;border-radius:999px;padding:3px 8px;font-weight:700;white-space:nowrap}
+.preview-badge{font-size:.61rem}
+.preview-badge.ran{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
+.coordinate-layout{display:grid;grid-template-columns:28px minmax(0,1fr);grid-template-rows:22px auto}
+.x-axis-shell{padding:0 13px;position:relative}
+.y-axis-shell{padding:13px 0;position:relative}
+.top-labels,.left-labels{position:relative;width:100%;height:100%}
+.axis-label{position:absolute;font-size:8px;line-height:1;color:#e5e7eb;white-space:nowrap}
+.top-labels .axis-label{bottom:2px;transform:translateX(-50%)}
+.top-labels .first{transform:none}
+.top-labels .last{transform:translateX(-100%)}
+.left-labels .axis-label{right:3px;transform:translateY(-50%)}
+.left-labels .first{transform:none}
+.left-labels .last{transform:translateY(-100%)}
+.screen-bezel{background:#07090b;border-radius:14px;padding:11px;border:2px solid #1c2025;box-shadow:inset 0 0 0 2px #343a41}
+canvas#v5screen{display:block;width:100%;aspect-ratio:2/1;background:#000;image-rendering:pixelated;cursor:crosshair;border-radius:2px}
+
+.screen-info-panel{grid-area:info;border:1px solid var(--border);border-radius:14px;background:var(--panel);padding:9px;display:flex;flex-direction:column;gap:7px;align-self:stretch}
+.panel-title{font-size:.88rem;font-weight:700}
+.info-box{border:1px solid var(--border);border-radius:8px;padding:7px;background:var(--panel-soft)}
+.info-label{font-size:.68rem;color:var(--muted)}
+.info-value{font-size:.78rem;font-weight:700;white-space:nowrap}
+.section-title{border-top:1px solid var(--border);padding-top:8px;margin-top:2px;font-size:.77rem;font-weight:700}
+.setting-row,.count-row{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--border);border-radius:8px;padding:7px;font-size:.72rem;background:var(--panel-soft)}
+.setting-value{display:flex;align-items:center;gap:5px}
+.warning-title{display:flex;justify-content:space-between}
+.warning-list{display:flex;flex-direction:column;gap:4px}
+.warning-item{border:1px solid var(--warning);border-radius:7px;padding:6px;font-size:.66rem;background:var(--warning-bg);line-height:1.3}
+.error-item{border-color:var(--error);background:var(--error-bg)}
+.no-warning{border:1px solid var(--border);border-radius:7px;padding:6px;font-size:.67rem;color:var(--muted);background:var(--panel-soft)}
+.total-row{background:var(--accent-soft)}
+.autosave-row{display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:8px;font-size:.67rem;color:var(--muted)}
+
+.workspace-section{grid-area:workspace;border:1px solid var(--border);border-radius:14px;background:var(--panel);overflow:hidden;min-width:0}
+.workspace-header{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;border-bottom:1px solid var(--border);min-height:36px}
+.workspace-title{font-weight:700}
+.small-example{font-size:.68rem;padding:4px 7px;border-radius:7px;line-height:1.1}
+.workspace{min-height:290px;padding:14px;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:30px 30px;background-color:var(--panel)}
+.hat-block{width:min(100%,700px);background:var(--events);color:white;border-radius:10px 10px 5px 5px;padding:10px 13px;font-weight:700;box-shadow:0 2px 0 rgba(0,0,0,.18)}
+.stack{width:min(100%,700px)}
+.program-block{background:var(--screen);color:#fff;padding:8px 9px;display:flex;flex-wrap:wrap;align-items:center;gap:5px;font-size:.78rem;font-weight:700;border-radius:5px;margin-top:2px;box-shadow:0 2px 0 rgba(0,0,0,.25);cursor:grab}
+.program-block input,.program-block select{border:0;border-radius:5px;background:#fff;color:#1f2937;padding:3px 5px;font-size:.76rem;width:58px}
+.program-block input{text-align:center;cursor:text}
+.program-block select{width:86px}
+.duplicate{margin-left:auto}
+.block-action{background:rgba(0,0,0,.25);color:#fff;border:0;padding:3px 6px;font-size:.68rem;border-radius:5px}
+.block-action:hover{background:rgba(0,0,0,.38)}
+.empty-message{padding:14px 8px;font-size:.82rem;color:var(--muted)}
+
+.python-workspace{min-height:290px;background:#161b22}
+.editor-topbar{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#242b34;color:#e5e7eb;font-family:Consolas,Monaco,'Courier New',monospace;font-size:.72rem;border-bottom:1px solid #343c47}
+.python-status{font-family:Arial,Helvetica,sans-serif;color:#aeb8c5}
+.python-status.error{color:#ff9b9b}
+#pythonEditor{display:block;width:100%;height:290px;resize:vertical;border:0;outline:0;padding:13px 15px;background:#161b22;color:#e7edf4;font-family:Consolas,'Courier New',monospace;font-size:.82rem;line-height:1.55;tab-size:4}
+.python-note{padding:7px 10px;background:#20262e;border-top:1px solid #343c47;color:#aeb8c5;font-size:.68rem}
+.status-message{border-top:1px solid var(--border);padding:8px 11px;font-size:.77rem;color:var(--muted)}
+
+@media(max-width:980px){
+  .main-layout{grid-template-columns:160px minmax(480px,1fr);grid-template-areas:'toolbox brain' 'toolbox workspace' 'info info'}
+  .screen-info-panel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+  .panel-title,.section-title,.warning-list,.autosave-row{grid-column:1/-1}
+}
+@media(max-width:720px){
+  body{padding:8px}
+  .topbar{align-items:flex-start;flex-direction:column}
+  .actions{justify-content:flex-start}
+  .main-layout{grid-template-columns:1fr;grid-template-areas:'toolbox' 'brain' 'workspace' 'info'}
+  .screen-info-panel{display:flex}
+}
+</style>
+</head>
+<body>
+<div id="v5screenapp">
+  <div class="topbar">
+    <div class="heading-area">
+      <div class="app-title">V5 Brain Screen Programming</div>
+      <div class="subtitle">Build a picture with Screen commands and see the result immediately.</div>
+      <div class="mode-switch" role="group" aria-label="Programming language">
+        <button id="blocksMode" class="mode-btn active" type="button">Blocks</button>
+        <button id="pythonMode" class="mode-btn" type="button">Python</button>
+      </div>
+    </div>
+
+    <div class="actions">
+      <label>Project name
+        <input id="projectName" value="My Brain Picture">
+      </label>
+      <button id="runProgram" class="primary" type="button">▶ Run</button>
+      <button id="undoBtn" type="button">Undo</button>
+      <button id="redoBtn" type="button">Redo</button>
+      <button id="newBtn" type="button">New</button>
+      <button id="saveFileBtn" type="button">Save Project File</button>
+      <button id="openFileBtn" type="button">Open Project File</button>
+      <button id="pngBtn" type="button">Download PNG</button>
+      <button id="gridToggle" type="button">Grid: Off</button>
+      <input id="projectFileInput" class="hidden" type="file" accept=".json,.v5screen,.v5screen.json,application/json">
+    </div>
+  </div>
+
+  <div id="restoreBar" class="restore-bar hidden">
+    <div><strong>Autosaved work found</strong><div id="restoreText" class="small"></div></div>
+    <div class="restore-actions">
+      <button id="restoreBtn" class="primary" type="button">Restore</button>
+      <button id="discardRestoreBtn" type="button">Start Fresh</button>
+    </div>
+  </div>
+
+  <div id="notice" class="notice hidden" aria-live="polite"></div>
+
+  <div class="main-layout">
+    <aside class="toolbox">
+      <div id="toolboxHeading" class="toolbox-title">Toolbox</div>
+
+      <div id="blocksTools">
+        <div class="category events-cat">Events</div>
+        <div class="hat-tool">when started</div>
+        <div class="category screen-cat">Screen</div>
+        <button class="toolblock" draggable="true" data-type="clear" type="button">clear screen</button>
+        <button class="toolblock" draggable="true" data-type="pen" type="button">set pen color <i class="mini-swatch" style="background:white"></i> <b>white</b></button>
+        <button class="toolblock" draggable="true" data-type="fill" type="button">set fill color <i class="mini-swatch" style="background:blue"></i> <b>blue</b></button>
+        <button class="toolblock" draggable="true" data-type="width" type="button">set pen width <b>2</b></button>
+        <button class="toolblock" draggable="true" data-type="pixel" type="button">draw pixel <span>x</span> <b>90</b> <span>y</span> <b>90</b></button>
+        <button class="toolblock" draggable="true" data-type="line" type="button">draw line <span>x1</span> <b>30</b> <span>y1</span> <b>30</b></button>
+        <button class="toolblock" draggable="true" data-type="rect" type="button">draw rectangle</button>
+        <button class="toolblock" draggable="true" data-type="circle" type="button">draw circle</button>
+        <div class="tool-help">Click or drag a block into the workspace. Double-click a number to type a new value.</div>
+      </div>
+
+      <div id="pythonTools" class="hidden">
+        <div class="category python-cat">Brain Screen</div>
+        <div class="python-help">Click a command to insert it into the Python editor.</div>
+        <button class="python-snippet" data-snippet="brain.screen.clear_screen()" type="button">clear_screen()</button>
+        <button class="python-snippet" data-snippet="brain.screen.set_pen_color(Color.WHITE)" type="button">set_pen_color()</button>
+        <button class="python-snippet" data-snippet="brain.screen.set_fill_color(Color.BLUE)" type="button">set_fill_color()</button>
+        <button class="python-snippet" data-snippet="brain.screen.set_pen_width(2)" type="button">set_pen_width()</button>
+        <button class="python-snippet" data-snippet="brain.screen.draw_pixel(90, 90)" type="button">draw_pixel()</button>
+        <button class="python-snippet" data-snippet="brain.screen.draw_line(30, 30, 300, 150)" type="button">draw_line()</button>
+        <button class="python-snippet" data-snippet="brain.screen.draw_rectangle(60, 60, 180, 90)" type="button">draw_rectangle()</button>
+        <button class="python-snippet" data-snippet="brain.screen.draw_circle(240, 120, 45)" type="button">draw_circle()</button>
+
+        <div class="python-reference">
+          <strong>Colors</strong>
+          <div>Color.RED</div><div>Color.ORANGE</div><div>Color.YELLOW</div><div>Color.GREEN</div>
+          <div>Color.BLUE</div><div>Color.PURPLE</div><div>Color.CYAN</div><div>Color.WHITE</div><div>Color.BLACK</div>
+        </div>
+        <button id="blocksToPython" class="convert-btn" type="button">Copy Blocks to Python</button>
+      </div>
+    </aside>
+
+    <section class="brain-area">
+      <div class="brain-shell">
+        <div class="brain-labels">
+          <span class="v5-mark">V5</span>
+          <span>VEX ROBOT BRAIN</span>
+          <span id="previewBadge" class="preview-badge">LIVE PREVIEW</span>
+        </div>
+        <div class="coordinate-layout">
+          <div></div>
+          <div class="x-axis-shell"><div id="topLabels" class="top-labels"></div></div>
+          <div class="y-axis-shell"><div id="leftLabels" class="left-labels"></div></div>
+          <div class="screen-bezel"><canvas id="v5screen" width="480" height="240" aria-label="VEX V5 Brain screen preview"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="screen-info-panel">
+      <div class="panel-title">Screen Information</div>
+      <div class="info-box"><div class="info-label">Mouse Position</div><div id="mouseCoords" class="info-value">X: -- &nbsp; Y: --</div></div>
+      <div class="info-box"><div class="info-label">Last Click</div><div id="clickCoords" class="info-value">none</div></div>
+      <div class="info-box"><div class="info-label">Status</div><div id="runState" class="info-value">Previewing</div></div>
+
+      <div class="section-title">Current Drawing Settings</div>
+      <div class="setting-row"><span>Pen</span><span class="setting-value"><i id="penSwatch" class="swatch"></i><strong id="currentPen">white</strong></span></div>
+      <div class="setting-row"><span>Fill</span><span class="setting-value"><i id="fillSwatch" class="swatch"></i><strong id="currentFill">blue</strong></span></div>
+      <div class="setting-row"><span>Pen Width</span><strong id="currentWidth">2</strong></div>
+
+      <div class="section-title warning-title"><span>Screen Warnings</span><span id="warningCount">0</span></div>
+      <div id="warningList" class="warning-list"><div class="no-warning">✓ Everything is on screen.</div></div>
+
+      <div id="countTitle" class="section-title">Blocks Used</div>
+      <div class="count-row"><span>Pixels</span><strong id="pixelCount">0</strong></div>
+      <div class="count-row"><span>Lines</span><strong id="lineCount">0</strong></div>
+      <div class="count-row"><span>Rectangles</span><strong id="rectCount">0</strong></div>
+      <div class="count-row"><span>Circles</span><strong id="circleCount">0</strong></div>
+      <div class="count-row total-row"><span id="totalLabel">Total Blocks</span><strong id="totalCount">0</strong></div>
+      <div class="autosave-row"><span>Autosave</span><strong id="autosaveState">Ready</strong></div>
+    </aside>
+
+    <section class="workspace-section">
+      <div class="workspace-header">
+        <div id="workspaceTitle" class="workspace-title">Coding Workspace</div>
+        <button id="exampleBtn" class="small-example" type="button">Load Example</button>
+      </div>
+
+      <div id="blocksWorkspace" class="workspace">
+        <div class="hat-block">when started</div>
+        <div id="stack" class="stack"></div>
+        <div id="emptyMessage" class="empty-message">Drag or click Screen blocks from the toolbox to begin.</div>
+      </div>
+
+      <div id="pythonWorkspace" class="python-workspace hidden">
+        <div class="editor-topbar"><span>main.py</span><span id="pythonStatus" class="python-status">Ready</span></div>
+        <textarea id="pythonEditor" spellcheck="false" aria-label="VEX V5 Python code editor"></textarea>
+        <div class="python-note">This practice editor runs the Brain Screen commands shown in the Python toolbox.</div>
+      </div>
+
+      <div id="statusMessage" class="status-message">Ready. Add a Screen block.</div>
+    </section>
+  </div>
+</div>
+
+<script>
+(()=>{
+'use strict';
+const root=document.getElementById('v5screenapp');
+const $=s=>root.querySelector(s);
+const canvas=$('#v5screen');
+const ctx=canvas.getContext('2d');
+const stack=$('#stack');
+const blocksWorkspace=$('#blocksWorkspace');
+const editor=$('#pythonEditor');
+const AUTOSAVE_KEY='v5-screen-practice-autosave-v7';
+
+let mode='blocks';
+let program=[];
+let pythonCode='';
+let pythonTouched=false;
+let grid=false;
+let history=[];
+let historyIndex=-1;
+let drag=null;
+let autosaveTimer=null;
+let pythonTimer=null;
+let pendingAutosave=null;
+
+const defaults={
+  clear:{type:'clear',color:'black'},
+  pen:{type:'pen',color:'white'},
+  fill:{type:'fill',color:'blue'},
+  width:{type:'width',value:2},
+  pixel:{type:'pixel',x:90,y:90},
+  line:{type:'line',x1:30,y1:30,x2:300,y2:150},
+  rect:{type:'rect',x:60,y:60,w:180,h:90},
+  circle:{type:'circle',x:240,y:120,r:45}
+};
+
+const clone=value=>JSON.parse(JSON.stringify(value));
+const number=(value,fallback=0)=>Number.isFinite(Number(value))?Number(value):fallback;
+const cssColor=value=>String(value||'white').toLowerCase();
+
+function starterPython(){
+  return `from vex import *\n\nbrain = Brain()\n\n# Brain screen drawing\nbrain.screen.clear_screen()\nbrain.screen.set_pen_color(Color.WHITE)\nbrain.screen.set_fill_color(Color.BLUE)\n\n# Add your drawing commands below\n`;
+}
+
+function examplePython(){
+  return `from vex import *\n\nbrain = Brain()\n\nbrain.screen.clear_screen()\nbrain.screen.set_fill_color(Color.BLUE)\nbrain.screen.set_pen_color(Color.WHITE)\nbrain.screen.draw_rectangle(90, 60, 300, 120)\n\nbrain.screen.set_fill_color(Color.CYAN)\nbrain.screen.draw_circle(180, 110, 25)\nbrain.screen.draw_circle(300, 110, 25)\n\nbrain.screen.set_pen_color(Color.YELLOW)\nbrain.screen.draw_line(210, 150, 270, 150)\n\nbrain.screen.set_pen_color(Color.RED)\nbrain.screen.draw_pixel(240, 30)\n`;
+}
+
+function safeName(){
+  return ($('#projectName').value.trim()||'Brain-Screen-Picture')
+    .replace(/[^a-z0-9-_]+/gi,'-')
+    .replace(/^-+|-+$/g,'') || 'Brain-Screen-Picture';
+}
+
+function notice(text){
+  const node=$('#notice');
+  node.textContent=text;
+  node.classList.remove('hidden');
+  clearTimeout(node._timer);
+  node._timer=setTimeout(()=>node.classList.add('hidden'),3200);
+}
+
+function triggerDownload(href,filename){
+  const a=document.createElement('a');
+  a.href=href;
+  a.download=filename;
+  a.style.display='none';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+function downloadBlob(blob,filename){
+  const url=URL.createObjectURL(blob);
+  triggerDownload(url,filename);
+  setTimeout(()=>URL.revokeObjectURL(url),3000);
+}
+
+function projectData(){
+  return {
+    format:'VEX V5 Brain Screen Practice Project',
+    version:9,
+    name:$('#projectName').value.trim()||'My Brain Picture',
+    mode,
+    grid,
+    program:clone(program),
+    pythonCode,
+    pythonTouched,
+    savedAt:new Date().toISOString()
+  };
+}
+
+function roundedRect(c,x,y,w,h,r){
+  const rr=Math.min(r,w/2,h/2);
+  c.beginPath();
+  c.moveTo(x+rr,y);
+  c.arcTo(x+w,y,x+w,y+h,rr);
+  c.arcTo(x+w,y+h,x,y+h,rr);
+  c.arcTo(x,y+h,x,y,rr);
+  c.arcTo(x,y,x+w,y,rr);
+  c.closePath();
+}
+
+function drawGridOn(c){
+  c.save();
+  c.fillStyle='rgba(255,255,255,.34)';
+  for(let x=0;x<=480;x+=30){
+    if(x===0)c.fillRect(0,0,2,240);
+    else if(x===480)c.fillRect(478,0,2,240);
+    else c.fillRect(x-1,0,2,240);
+  }
+  for(let y=0;y<=240;y+=30){
+    if(y===0)c.fillRect(0,0,480,2);
+    else if(y===240)c.fillRect(0,238,480,2);
+    else c.fillRect(0,y-1,480,2);
+  }
+  c.restore();
+}
+
+function drawOperations(c,ops,showGrid){
+  let pen='white';
+  let fill='blue';
+  let width=2;
+
+  c.clearRect(0,0,480,240);
+  c.fillStyle='black';
+  c.fillRect(0,0,480,240);
+
+  ops.forEach(item=>{
+    if(item.type==='clear'){
+      c.fillStyle=cssColor(item.color||'black');
+      c.fillRect(0,0,480,240);
+      return;
+    }
+    if(item.type==='pen'){pen=item.color||'white';return}
+    if(item.type==='fill'){fill=item.color||'blue';return}
+    if(item.type==='width'){width=Math.max(0,number(item.value,2));return}
+
+    c.lineWidth=Math.max(.5,width);
+    c.strokeStyle=cssColor(pen);
+    c.fillStyle=cssColor(fill);
+
+    if(item.type==='pixel'){
+      c.fillStyle=cssColor(pen);
+      c.fillRect(number(item.x),number(item.y),Math.max(1,width),Math.max(1,width));
+    }else if(item.type==='line'){
+      c.beginPath();
+      c.moveTo(number(item.x1),number(item.y1));
+      c.lineTo(number(item.x2),number(item.y2));
+      c.stroke();
+    }else if(item.type==='rect'){
+      const x=number(item.x),y=number(item.y),w=number(item.w),h=number(item.h);
+      if(w>0&&h>0){
+        c.fillStyle=cssColor(fill);
+        c.fillRect(x,y,w,h);
+        if(width>0){c.strokeStyle=cssColor(pen);c.strokeRect(x,y,w,h)}
+      }
+    }else if(item.type==='circle'){
+      const r=number(item.r);
+      if(r>0){
+        c.beginPath();
+        c.arc(number(item.x),number(item.y),r,0,Math.PI*2);
+        c.fillStyle=cssColor(fill);
+        c.fill();
+        if(width>0){c.strokeStyle=cssColor(pen);c.stroke()}
+      }
+    }
+  });
+
+  if(showGrid)drawGridOn(c);
+}
+
+function generatePythonFromBlocks(){
+  const lines=['from vex import *','','brain = Brain()','','# Brain screen drawing'];
+  program.forEach(item=>{
+    if(item.type==='clear'){
+      if((item.color||'black').toLowerCase()==='black')lines.push('brain.screen.clear_screen()');
+      else lines.push(`brain.screen.clear_screen(Color.${String(item.color||'black').toUpperCase()})`);
+    }else if(item.type==='pen')lines.push(`brain.screen.set_pen_color(Color.${String(item.color||'white').toUpperCase()})`);
+    else if(item.type==='fill')lines.push(`brain.screen.set_fill_color(Color.${String(item.color||'blue').toUpperCase()})`);
+    else if(item.type==='width')lines.push(`brain.screen.set_pen_width(${number(item.value,2)})`);
+    else if(item.type==='pixel')lines.push(`brain.screen.draw_pixel(${number(item.x)}, ${number(item.y)})`);
+    else if(item.type==='line')lines.push(`brain.screen.draw_line(${number(item.x1)}, ${number(item.y1)}, ${number(item.x2)}, ${number(item.y2)})`);
+    else if(item.type==='rect')lines.push(`brain.screen.draw_rectangle(${number(item.x)}, ${number(item.y)}, ${number(item.w)}, ${number(item.h)})`);
+    else if(item.type==='circle')lines.push(`brain.screen.draw_circle(${number(item.x)}, ${number(item.y)}, ${number(item.r)})`);
+  });
+  return lines.join('\n')+'\n';
+}
+
+function parseColor(arg,lineNo,errors){
+  const match=String(arg||'').trim().match(/^Color\.([A-Z]+)$/i);
+  if(!match){errors.push(`Line ${lineNo}: use a color such as Color.RED.`);return null}
+  const color=match[1].toLowerCase();
+  const valid=['red','orange','yellow','green','blue','purple','cyan','white','black'];
+  if(!valid.includes(color)){errors.push(`Line ${lineNo}: unknown color ${match[1]}.`);return null}
+  return color;
+}
+
+function parseNumber(arg,lineNo,errors){
+  const text=String(arg??'').trim();
+  if(!/^-?(?:\d+\.?\d*|\.\d+)$/.test(text)){
+    errors.push(`Line ${lineNo}: this practice simulator expects a number, not “${text}”.`);
+    return null;
+  }
+  return Number(text);
+}
+
+function parsePython(code){
+  const ops=[];
+  const errors=[];
+  const lines=String(code||'').split(/\r?\n/);
+
+  lines.forEach((raw,index)=>{
+    const lineNo=index+1;
+    let line=raw.trim();
+    if(!line||line.startsWith('#'))return;
+    line=line.replace(/\s+#.*$/,'').trim();
+    if(!line)return;
+    if(/^from\s+vex\s+import\s+\*\s*$/i.test(line))return;
+    if(/^brain\s*=\s*Brain\s*\(\s*\)\s*$/i.test(line))return;
+
+    const call=line.match(/^brain\.screen\.([a-z_]+)\s*\((.*)\)\s*$/i);
+    if(!call){errors.push(`Line ${lineNo}: command not recognized by this Brain Screen practice simulator.`);return}
+
+    const method=call[1].toLowerCase();
+    const args=call[2].trim()===''?[]:call[2].split(',').map(x=>x.trim());
+
+    if(method==='clear_screen'){
+      if(args.length>1){errors.push(`Line ${lineNo}: clear_screen uses zero or one color.`);return}
+      let color='black';
+      if(args.length===1){color=parseColor(args[0],lineNo,errors);if(color===null)return}
+      ops.push({type:'clear',color});return;
+    }
+
+    if(method==='set_pen_color'||method==='set_fill_color'){
+      if(args.length!==1){errors.push(`Line ${lineNo}: ${method} needs one color.`);return}
+      const color=parseColor(args[0],lineNo,errors);if(color===null)return;
+      ops.push({type:method==='set_pen_color'?'pen':'fill',color});return;
+    }
+
+    if(method==='set_pen_width'){
+      if(args.length!==1){errors.push(`Line ${lineNo}: set_pen_width needs one number.`);return}
+      const value=parseNumber(args[0],lineNo,errors);if(value===null)return;
+      ops.push({type:'width',value});return;
+    }
+
+    if(method==='draw_pixel'){
+      if(args.length!==2){errors.push(`Line ${lineNo}: draw_pixel needs x and y.`);return}
+      const values=args.map(x=>parseNumber(x,lineNo,errors));if(values.some(x=>x===null))return;
+      ops.push({type:'pixel',x:values[0],y:values[1]});return;
+    }
+
+    if(method==='draw_line'){
+      if(args.length!==4){errors.push(`Line ${lineNo}: draw_line needs x1, y1, x2, y2.`);return}
+      const values=args.map(x=>parseNumber(x,lineNo,errors));if(values.some(x=>x===null))return;
+      ops.push({type:'line',x1:values[0],y1:values[1],x2:values[2],y2:values[3]});return;
+    }
+
+    if(method==='draw_rectangle'){
+      if(args.length!==4){errors.push(`Line ${lineNo}: draw_rectangle needs x, y, width, height.`);return}
+      const values=args.map(x=>parseNumber(x,lineNo,errors));if(values.some(x=>x===null))return;
+      ops.push({type:'rect',x:values[0],y:values[1],w:values[2],h:values[3]});return;
+    }
+
+    if(method==='draw_circle'){
+      if(args.length!==3){errors.push(`Line ${lineNo}: draw_circle needs x, y, radius.`);return}
+      const values=args.map(x=>parseNumber(x,lineNo,errors));if(values.some(x=>x===null))return;
+      ops.push({type:'circle',x:values[0],y:values[1],r:values[2]});return;
+    }
+
+    errors.push(`Line ${lineNo}: ${method} is not included in this Brain Screen practice yet.`);
+  });
+
+  return {ops,errors};
+}
+
+function activeResult(){
+  return mode==='python'?parsePython(pythonCode):{ops:program,errors:[]};
+}
+
+function buildBrainExport(){
+  const out=document.createElement('canvas');
+  out.width=720;
+  out.height=420;
+  const g=out.getContext('2d');
+
+  g.fillStyle='#ffffff';
+  g.fillRect(0,0,out.width,out.height);
+
+  const bx=20,by=18,bw=680,bh=382;
+  roundedRect(g,bx,by,bw,bh,30);
+  g.fillStyle='#3d444c';
+  g.fill();
+  g.lineWidth=3;
+  g.strokeStyle='#222a32';
+  g.stroke();
+
+  roundedRect(g,38,31,56,25,12);
+  g.fillStyle='#20262e';
+  g.fill();
+  g.strokeStyle='#707984';
+  g.lineWidth=1;
+  g.stroke();
+
+  g.fillStyle='#ffffff';
+  g.font='bold 13px Arial';
+  g.textAlign='center';
+  g.textBaseline='middle';
+  g.fillText('V5',66,43.5);
+  g.font='bold 12px Arial';
+  g.fillText('VEX ROBOT BRAIN',360,43.5);
+
+  const screenX=130;
+  const screenY=116;
+  const screenW=480;
+  const screenH=240;
+
+  roundedRect(g,116,100,508,268,15);
+  g.fillStyle='#080a0c';
+  g.fill();
+  g.strokeStyle='#1c2025';
+  g.lineWidth=3;
+  g.stroke();
+
+  g.fillStyle='#f2f3f5';
+  g.font='9px Arial';
+  g.textBaseline='alphabetic';
+  for(let x=0;x<=480;x+=30){
+    const px=screenX+x;
+    g.textAlign=x===0?'left':x===480?'right':'center';
+    g.fillText(String(x),px,92);
+  }
+
+  g.textBaseline='middle';
+  g.textAlign='right';
+  for(let y=0;y<=240;y+=30){g.fillText(String(y),110,screenY+y)}
+
+  const screenCanvas=document.createElement('canvas');
+  screenCanvas.width=480;
+  screenCanvas.height=240;
+  drawOperations(screenCanvas.getContext('2d'),activeResult().ops,true);
+  g.drawImage(screenCanvas,screenX,screenY);
+
+  g.strokeStyle='#40464e';
+  g.lineWidth=2;
+  g.strokeRect(screenX-1,screenY-1,482,242);
+
+  g.fillStyle='#d9dde2';
+  g.font='10px Arial';
+  g.textAlign='center';
+  g.textBaseline='middle';
+  g.fillText('480 × 240 Brain Screen • 30 Pixel Grid',360,386);
+
+  return out;
+}
+
+function pushHistory(){
+  history=history.slice(0,historyIndex+1);
+  history.push(clone(program));
+  historyIndex=history.length-1;
+  updateHistoryButtons();
+}
+
+function updateHistoryButtons(){
+  const disabled=mode==='python';
+  $('#undoBtn').disabled=disabled||historyIndex<=0;
+  $('#redoBtn').disabled=disabled||historyIndex>=history.length-1;
+}
+
+function restoreHistory(index){
+  if(mode==='python'||index<0||index>=history.length)return;
+  historyIndex=index;
+  program=clone(history[index]);
+  renderWorkspace();
+  renderScreen();
+  setDirty(true);
+  scheduleAutosave();
+  updateHistoryButtons();
+}
+
+function setDirty(value=true){
+  $('#previewBadge').textContent=value?'LIVE PREVIEW':'PROGRAM RAN';
+  $('#previewBadge').classList.toggle('ran',!value);
+  $('#runState').textContent=value?'Previewing':'Ran';
+}
+
+function scheduleAutosave(){
+  clearTimeout(autosaveTimer);
+  $('#autosaveState').textContent='Saving…';
+  autosaveTimer=setTimeout(()=>{
+    try{
+      const data=projectData();
+      data.timestamp=Date.now();
+      localStorage.setItem(AUTOSAVE_KEY,JSON.stringify(data));
+      $('#autosaveState').textContent='Saved';
+    }catch{
+      $('#autosaveState').textContent='Unavailable';
+    }
+  },500);
+}
+
+function checkAutosave(){
+  try{
+    const raw=localStorage.getItem(AUTOSAVE_KEY);
+    if(!raw)return;
+    const data=JSON.parse(raw);
+    if(!data||(!Array.isArray(data.program)&&!data.pythonCode))return;
+    if((data.program?.length||0)===0&&!String(data.pythonCode||'').trim())return;
+    pendingAutosave=data;
+    $('#restoreText').textContent=(data.name||'Brain Screen Project')+' — '+new Date(data.timestamp||Date.now()).toLocaleString();
+    $('#restoreBar').classList.remove('hidden');
+  }catch{}
+}
+
+function buildAxes(){
+  const top=$('#topLabels');
+  const left=$('#leftLabels');
+  top.innerHTML='';
+  left.innerHTML='';
+  for(let x=0;x<=480;x+=30){
+    const span=document.createElement('span');
+    span.className='axis-label'+(x===0?' first':x===480?' last':'');
+    span.textContent=x;
+    span.style.left=(x/480*100)+'%';
+    top.appendChild(span);
+  }
+  for(let y=0;y<=240;y+=30){
+    const span=document.createElement('span');
+    span.className='axis-label'+(y===0?' first':y===240?' last':'');
+    span.textContent=y;
+    span.style.top=(y/240*100)+'%';
+    left.appendChild(span);
+  }
+}
+
+function colorSelect(key,value){
+  const colors=['white','red','orange','yellow','green','blue','purple','cyan','black'];
+  return `<i class="block-swatch" style="background:${value}"></i><select data-key="${key}">${colors.map(c=>`<option ${c===value?'selected':''}>${c}</option>`).join('')}</select>`;
+}
+
+function numberInput(key,value,label){
+  const text=label===undefined?key:label;
+  return `${text?`<span>${text}</span>`:''}<input type="number" data-key="${key}" value="${value}" title="Double-click to replace this number">`;
+}
+
+function blockBody(item){
+  if(item.type==='clear')return `clear screen ${colorSelect('color',item.color)}`;
+  if(item.type==='pen')return `set pen color ${colorSelect('color',item.color)}`;
+  if(item.type==='fill')return `set fill color ${colorSelect('color',item.color)}`;
+  if(item.type==='width')return `set pen width ${numberInput('value',item.value,'')}`;
+  if(item.type==='pixel')return `draw pixel at ${numberInput('x',item.x,'x')} ${numberInput('y',item.y,'y')}`;
+  if(item.type==='line')return `draw line from ${numberInput('x1',item.x1,'x1')} ${numberInput('y1',item.y1,'y1')} to ${numberInput('x2',item.x2,'x2')} ${numberInput('y2',item.y2,'y2')}`;
+  if(item.type==='rect')return `draw rectangle at ${numberInput('x',item.x,'x')} ${numberInput('y',item.y,'y')} ${numberInput('w',item.w,'width')} ${numberInput('h',item.h,'height')}`;
+  return `draw circle at ${numberInput('x',item.x,'x')} ${numberInput('y',item.y,'y')} ${numberInput('r',item.r,'radius')}`;
+}
+
+function blockChanged(){
+  if(!pythonTouched)pythonCode=generatePythonFromBlocks();
+  renderScreen();
+  setDirty(true);
+  scheduleAutosave();
+}
+
+function renderWorkspace(){
+  stack.innerHTML='';
+  $('#emptyMessage').style.display=program.length?'none':'block';
+
+  program.forEach((item,index)=>{
+    const el=document.createElement('div');
+    el.className='program-block';
+    el.draggable=true;
+    el.innerHTML=`<span class="drag-handle">⠿</span>${blockBody(item)}<button class="block-action duplicate" type="button">Duplicate</button><button class="block-action delete" type="button">×</button>`;
+    stack.appendChild(el);
+
+    el.querySelectorAll('input,select').forEach(control=>{
+      control.addEventListener('pointerdown',e=>e.stopPropagation());
+      control.addEventListener('mousedown',e=>e.stopPropagation());
+      control.addEventListener('dblclick',e=>{
+        e.stopPropagation();
+        control.focus();
+        control.select?.();
+      });
+      control.addEventListener('keydown',e=>{
+        if(e.key==='Enter'){
+          e.preventDefault();
+          control.blur();
+        }
+      });
+      control.addEventListener('input',()=>{
+        item[control.dataset.key]=control.tagName==='SELECT'?control.value:Number(control.value);
+        if(control.tagName==='SELECT'&&control.previousElementSibling?.classList.contains('block-swatch')){
+          control.previousElementSibling.style.background=control.value;
+        }
+        blockChanged();
+      });
+      control.addEventListener('change',pushHistory);
+    });
+
+    el.querySelector('.duplicate').onclick=()=>{
+      program.splice(index+1,0,clone(item));
+      pushHistory();
+      renderWorkspace();
+      blockChanged();
+    };
+
+    el.querySelector('.delete').onclick=()=>{
+      program.splice(index,1);
+      pushHistory();
+      renderWorkspace();
+      blockChanged();
+    };
+
+    el.addEventListener('dragstart',e=>{
+      if(e.target.matches('input,select,button')){e.preventDefault();return}
+      drag={kind:'program',index};
+    });
+    el.addEventListener('dragover',e=>e.preventDefault());
+    el.addEventListener('drop',e=>{
+      e.preventDefault();
+      if(!drag)return;
+      if(drag.kind==='tool')program.splice(index,0,clone(defaults[drag.type]));
+      else{
+        const from=drag.index;
+        const moved=program.splice(from,1)[0];
+        const to=from<index?index-1:index;
+        program.splice(Math.max(0,to),0,moved);
+      }
+      drag=null;
+      pushHistory();
+      renderWorkspace();
+      blockChanged();
+    });
+  });
+
+  updateInfo(activeResult());
+}
+
+function analyzeOperations(ops){
+  let pen='white',fill='blue',width=2;
+  const warnings=[];
+
+  ops.forEach((item,i)=>{
+    const command=i+1;
+    if(item.type==='pen')pen=item.color||'white';
+    else if(item.type==='fill')fill=item.color||'blue';
+    else if(item.type==='width'){
+      width=number(item.value,2);
+      if(width<0||width>32)warnings.push(`Command ${command}: pen width should be from 0 to 32.`);
+    }else if(item.type==='pixel'){
+      const x=number(item.x),y=number(item.y);
+      if(x<0||x>480||y<0||y>240)warnings.push(`Command ${command}: pixel (${x}, ${y}) is outside the screen.`);
+    }else if(item.type==='line'){
+      const values=[number(item.x1),number(item.y1),number(item.x2),number(item.y2)];
+      if(values[0]<0||values[0]>480||values[1]<0||values[1]>240||values[2]<0||values[2]>480||values[3]<0||values[3]>240){
+        warnings.push(`Command ${command}: line has an endpoint outside the screen.`);
+      }
+    }else if(item.type==='rect'){
+      const x=number(item.x),y=number(item.y),w=number(item.w),h=number(item.h);
+      if(w<=0||h<=0)warnings.push(`Command ${command}: rectangle dimensions must be positive.`);
+      else if(x<0||y<0||x+w>480||y+h>240)warnings.push(`Command ${command}: rectangle extends past the Brain screen.`);
+    }else if(item.type==='circle'){
+      const x=number(item.x),y=number(item.y),r=number(item.r);
+      if(r<=0)warnings.push(`Command ${command}: circle radius must be positive.`);
+      else if(x-r<0||x+r>480||y-r<0||y+r>240)warnings.push(`Command ${command}: circle extends past the Brain screen.`);
+    }
+  });
+
+  return {pen,fill,width,warnings};
+}
+
+function renderScreen(){
+  const result=activeResult();
+  drawOperations(ctx,result.ops,grid);
+  updateInfo(result);
+}
+
+function updateInfo(result){
+  const ops=result.ops||[];
+  const count=type=>ops.filter(item=>item.type===type).length;
+  $('#pixelCount').textContent=count('pixel');
+  $('#lineCount').textContent=count('line');
+  $('#rectCount').textContent=count('rect');
+  $('#circleCount').textContent=count('circle');
+  $('#totalCount').textContent=mode==='python'?ops.length:program.length;
+
+  const analysis=analyzeOperations(ops);
+  $('#currentPen').textContent=analysis.pen;
+  $('#currentFill').textContent=analysis.fill;
+  $('#currentWidth').textContent=analysis.width;
+  $('#penSwatch').style.background=cssColor(analysis.pen);
+  $('#fillSwatch').style.background=cssColor(analysis.fill);
+
+  const allWarnings=[...(result.errors||[]),...analysis.warnings];
+  $('#warningCount').textContent=allWarnings.length;
+  const list=$('#warningList');
+  list.innerHTML='';
+  if(!allWarnings.length){
+    list.innerHTML='<div class="no-warning">✓ Everything is on screen.</div>';
+  }else{
+    allWarnings.forEach((warning,index)=>{
+      const item=document.createElement('div');
+      item.className='warning-item'+(index<(result.errors||[]).length?' error-item':'');
+      item.textContent=(index<(result.errors||[]).length?'✕ ':'⚠ ')+warning;
+      list.appendChild(item);
+    });
+  }
+
+  if(mode==='python'){
+    const status=$('#pythonStatus');
+    if((result.errors||[]).length){
+      status.textContent=result.errors.length+' error'+(result.errors.length===1?'':'s');
+      status.classList.add('error');
+    }else{
+      status.textContent='Code looks good';
+      status.classList.remove('error');
+    }
+  }
+}
+
+function setMode(nextMode){
+  mode=nextMode;
+  const python=mode==='python';
+  $('#blocksMode').classList.toggle('active',!python);
+  $('#pythonMode').classList.toggle('active',python);
+  $('#blocksTools').classList.toggle('hidden',python);
+  $('#pythonTools').classList.toggle('hidden',!python);
+  $('#blocksWorkspace').classList.toggle('hidden',python);
+  $('#pythonWorkspace').classList.toggle('hidden',!python);
+  $('#toolboxHeading').textContent=python?'Python Commands':'Toolbox';
+  $('#workspaceTitle').textContent=python?'Python Workspace':'Coding Workspace';
+  $('#countTitle').textContent=python?'Commands Used':'Blocks Used';
+  $('#totalLabel').textContent=python?'Total Commands':'Total Blocks';
+
+  if(python){
+    if(!pythonTouched)pythonCode=generatePythonFromBlocks();
+    if(!pythonCode.trim())pythonCode=starterPython();
+    editor.value=pythonCode;
+    $('#statusMessage').textContent='Type VEX Python Brain Screen commands and press Run.';
+  }else{
+    $('#statusMessage').textContent='Ready. Add a Screen block.';
+  }
+
+  updateHistoryButtons();
+  renderScreen();
+  setDirty(true);
+  scheduleAutosave();
+}
+
+function loadProjectData(data){
+  if(!data)throw new Error('Invalid project');
+  program=Array.isArray(data.program)?clone(data.program):[];
+  pythonCode=typeof data.pythonCode==='string'?data.pythonCode:'';
+  pythonTouched=!!data.pythonTouched;
+  $('#projectName').value=data.name||'My Brain Picture';
+  grid=!!data.grid;
+  $('#gridToggle').textContent=`Grid: ${grid?'On':'Off'}`;
+  history=[];
+  historyIndex=-1;
+  pushHistory();
+  renderWorkspace();
+  setMode(data.mode==='python'?'python':'blocks');
+  scheduleAutosave();
+}
+
+root.querySelectorAll('.toolblock').forEach(button=>{
+  button.addEventListener('click',()=>{
+    program.push(clone(defaults[button.dataset.type]));
+    pushHistory();
+    renderWorkspace();
+    blockChanged();
+  });
+  button.addEventListener('dragstart',()=>drag={kind:'tool',type:button.dataset.type});
+});
+
+blocksWorkspace.addEventListener('dragover',e=>e.preventDefault());
+blocksWorkspace.addEventListener('drop',e=>{
+  e.preventDefault();
+  if(e.target.closest('.program-block')||!drag)return;
+  if(drag.kind==='tool')program.push(clone(defaults[drag.type]));
+  else program.push(program.splice(drag.index,1)[0]);
+  drag=null;
+  pushHistory();
+  renderWorkspace();
+  blockChanged();
+});
+
+root.querySelectorAll('.python-snippet').forEach(button=>{
+  button.addEventListener('click',()=>{
+    const snippet=button.dataset.snippet;
+    const start=editor.selectionStart;
+    const end=editor.selectionEnd;
+    const before=editor.value.slice(0,start);
+    const after=editor.value.slice(end);
+    const prefix=before.length&&!before.endsWith('\n')?'\n':'';
+    editor.value=before+prefix+snippet+'\n'+after;
+    editor.selectionStart=editor.selectionEnd=before.length+prefix.length+snippet.length+1;
+    editor.focus();
+    pythonCode=editor.value;
+    pythonTouched=true;
+    renderScreen();
+    setDirty(true);
+    scheduleAutosave();
+  });
+});
+
+editor.addEventListener('input',()=>{
+  pythonCode=editor.value;
+  pythonTouched=true;
+  setDirty(true);
+  scheduleAutosave();
+  clearTimeout(pythonTimer);
+  pythonTimer=setTimeout(renderScreen,160);
+});
+
+editor.addEventListener('keydown',e=>{
+  if(e.key==='Tab'){
+    e.preventDefault();
+    const start=editor.selectionStart;
+    const end=editor.selectionEnd;
+    editor.value=editor.value.slice(0,start)+'    '+editor.value.slice(end);
+    editor.selectionStart=editor.selectionEnd=start+4;
+    pythonCode=editor.value;
+    pythonTouched=true;
+    renderScreen();
+    scheduleAutosave();
+  }
+});
+
+$('#blocksMode').onclick=()=>setMode('blocks');
+$('#pythonMode').onclick=()=>setMode('python');
+$('#blocksToPython').onclick=()=>{
+  pythonCode=generatePythonFromBlocks();
+  pythonTouched=true;
+  editor.value=pythonCode;
+  renderScreen();
+  scheduleAutosave();
+  notice('Blocks copied into Python.');
+};
+
+$('#runProgram').onclick=()=>{
+  const result=activeResult();
+  renderScreen();
+  if(mode==='python'&&(result.errors||[]).length){
+    setDirty(true);
+    $('#statusMessage').textContent='Fix the Python errors shown in Screen Warnings.';
+  }else{
+    setDirty(false);
+    $('#statusMessage').textContent=mode==='python'?'Python program ran successfully.':'Program ran successfully.';
+  }
+};
+
+$('#undoBtn').onclick=()=>restoreHistory(historyIndex-1);
+$('#redoBtn').onclick=()=>restoreHistory(historyIndex+1);
+
+$('#newBtn').onclick=()=>{
+  program=[];
+  pythonCode=starterPython();
+  pythonTouched=false;
+  grid=false;
+  $('#projectName').value='My Brain Picture';
+  $('#gridToggle').textContent='Grid: Off';
+  history=[];
+  historyIndex=-1;
+  pushHistory();
+  renderWorkspace();
+  if(mode==='python')editor.value=pythonCode;
+  renderScreen();
+  setDirty(true);
+  scheduleAutosave();
+  notice('New project started.');
+};
+
+$('#saveFileBtn').onclick=()=>{
+  try{
+    const blob=new Blob([JSON.stringify(projectData(),null,2)],{type:'application/json'});
+    downloadBlob(blob,safeName()+'.v5screen.json');
+    notice('Project file download started.');
+  }catch{
+    notice('The project file could not be created.');
+  }
+};
+
+$('#openFileBtn').onclick=()=>$('#projectFileInput').click();
+$('#projectFileInput').onchange=async()=>{
+  const file=$('#projectFileInput').files?.[0];
+  if(!file)return;
+  try{
+    const data=JSON.parse(await file.text());
+    loadProjectData(data);
+    notice('Project file opened successfully.');
+  }catch{
+    notice('That file could not be opened as a V5 Brain Screen project.');
+  }
+  $('#projectFileInput').value='';
+};
+
+$('#pngBtn').onclick=()=>{
+  try{
+    const exportCanvas=buildBrainExport();
+    exportCanvas.toBlob(blob=>{
+      if(!blob){notice('The PNG could not be created.');return}
+      downloadBlob(blob,safeName()+'.png');
+      notice('PNG download started.');
+    },'image/png');
+  }catch{
+    notice('The PNG could not be created.');
+  }
+};
+
+$('#gridToggle').onclick=e=>{
+  grid=!grid;
+  e.currentTarget.textContent=`Grid: ${grid?'On':'Off'}`;
+  renderScreen();
+  scheduleAutosave();
+};
+
+$('#projectName').oninput=scheduleAutosave;
+
+$('#exampleBtn').onclick=()=>{
+  if(mode==='python'){
+    pythonCode=examplePython();
+    pythonTouched=true;
+    editor.value=pythonCode;
+    renderScreen();
+    setDirty(true);
+    scheduleAutosave();
+  }else{
+    program=[
+      {type:'clear',color:'black'},
+      {type:'fill',color:'blue'},
+      {type:'pen',color:'white'},
+      {type:'rect',x:90,y:60,w:300,h:120},
+      {type:'fill',color:'cyan'},
+      {type:'circle',x:180,y:110,r:25},
+      {type:'circle',x:300,y:110,r:25},
+      {type:'pen',color:'yellow'},
+      {type:'line',x1:210,y1:150,x2:270,y2:150},
+      {type:'pen',color:'red'},
+      {type:'pixel',x:240,y:30}
+    ];
+    pushHistory();
+    renderWorkspace();
+    blockChanged();
+  }
+};
+
+$('#restoreBtn').onclick=()=>{
+  if(!pendingAutosave)return;
+  try{
+    loadProjectData(pendingAutosave);
+    $('#restoreBar').classList.add('hidden');
+    pendingAutosave=null;
+    notice('Autosaved project restored.');
+  }catch{}
+};
+
+$('#discardRestoreBtn').onclick=()=>{
+  try{localStorage.removeItem(AUTOSAVE_KEY)}catch{}
+  pendingAutosave=null;
+  $('#restoreBar').classList.add('hidden');
+  notice('Starting with a fresh project.');
+};
+
+function point(e){
+  const rect=canvas.getBoundingClientRect();
+  return {
+    x:Math.max(0,Math.min(480,Math.round((e.clientX-rect.left)*480/rect.width))),
+    y:Math.max(0,Math.min(240,Math.round((e.clientY-rect.top)*240/rect.height)))
+  };
+}
+
+canvas.onmousemove=e=>{
+  const p=point(e);
+  $('#mouseCoords').textContent=`X: ${p.x}   Y: ${p.y}`;
+};
+canvas.onmouseleave=()=>$('#mouseCoords').textContent='X: --   Y: --';
+canvas.onclick=e=>{
+  const p=point(e);
+  $('#clickCoords').textContent=`X: ${p.x}   Y: ${p.y}`;
+};
+
+buildAxes();
+pythonCode=starterPython();
+pushHistory();
+renderWorkspace();
+setMode('blocks');
+checkAutosave();
+})();
+</script>
+</body>
+</html>
