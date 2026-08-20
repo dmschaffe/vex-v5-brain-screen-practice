@@ -67,10 +67,27 @@ button.primary:hover{background:#255fc8}
 .swatch{width:14px;height:14px}
 .block-swatch{width:15px;height:15px}
 .tool-help,.python-help{margin-top:10px;color:var(--muted);font-size:.69rem;line-height:1.35}
-.python-snippet{display:block;width:100%;text-align:left;justify-content:flex-start;margin-top:6px;padding:7px;border-radius:6px;font-family:Consolas,Monaco,'Courier New',monospace;font-size:.66rem;background:var(--python);color:white;border:0}
-.python-snippet:hover{background:#2e628d}
-.python-reference{border-top:1px solid var(--border);margin-top:11px;padding-top:8px;font-family:Consolas,Monaco,'Courier New',monospace;font-size:.65rem;line-height:1.5;color:var(--muted)}
-.python-reference strong{font-family:Arial,Helvetica,sans-serif;color:var(--text)}
+.python-mode .main-layout{grid-template-columns:285px minmax(520px,1fr) 190px}
+.python-mode .toolbox{padding:0;overflow:hidden}
+.python-mode .toolbox-title{display:none}
+.python-menu{background:#f7f7f7;color:#111}
+.python-menu-header{display:flex;align-items:center;gap:5px;padding:7px 10px 6px;font-size:.98rem;font-weight:700;background:#e9e7e7;border-bottom:1px solid #cfcfcf}
+.python-menu-arrow{font-size:.72rem;transform:translateY(1px)}
+.python-section-title{padding:4px 10px 3px;background:#fff;border-bottom:1px solid #d7d7d7;font-size:.91rem;font-weight:500}
+.python-section{background:#fff}
+.python-snippet{display:block;width:100%;min-height:24px;text-align:left;justify-content:flex-start;padding:3px 10px;border:0;border-radius:0;background:#fff;color:#111;font-family:Consolas,Monaco,'Courier New',monospace;font-size:.69rem;line-height:1.35;white-space:nowrap;overflow:hidden}
+.python-snippet:hover{background:#e8f1fb}
+.python-snippet:focus-visible{outline:2px solid #4a90e2;outline-offset:-2px}
+.py-prefix{color:#24799b}
+.py-method,.py-punct{color:#151515}
+.py-number{color:#138a6c}
+.py-enum{color:#d05b00}
+.python-menu-tip{margin:7px 10px 9px;padding-top:6px;border-top:1px solid #e1e1e1;color:#666;font-size:.64rem;line-height:1.3}
+.python-cheat{margin:7px 9px 9px;border-top:1px solid #cfcfcf;padding-top:6px;background:#fff}
+.python-cheat-title{font-size:.72rem;font-weight:700;margin-bottom:4px;color:#222}
+.python-cheat-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px 8px}
+.python-cheat-color{display:flex;align-items:center;gap:5px;font-family:Consolas,Monaco,'Courier New',monospace;font-size:.62rem;line-height:1.35;color:#d05b00;white-space:nowrap}
+.python-cheat-swatch{width:9px;height:9px;border-radius:50%;border:1px solid #777;flex:0 0 auto}
 
 .brain-area{grid-area:brain;display:flex;justify-content:center;min-width:0}
 .brain-shell{width:100%;max-width:650px;background:linear-gradient(#59616b,#303740);border:2px solid #222a32;border-radius:27px;padding:13px;color:white;box-shadow:inset 0 1px 0 rgba(255,255,255,.1)}
@@ -134,6 +151,7 @@ canvas#v5screen{display:block;width:100%;aspect-ratio:2/1;background:#000;image-
 
 @media(max-width:980px){
   .main-layout{grid-template-columns:160px minmax(480px,1fr);grid-template-areas:'toolbox brain' 'toolbox workspace' 'info info'}
+  .python-mode .main-layout{grid-template-columns:260px minmax(480px,1fr);grid-template-areas:'toolbox brain' 'toolbox workspace' 'info info'}
   .screen-info-panel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
   .panel-title,.section-title,.warning-list,.autosave-row{grid-column:1/-1}
 }
@@ -203,23 +221,41 @@ canvas#v5screen{display:block;width:100%;aspect-ratio:2/1;background:#000;image-
         <div class="tool-help">Click or drag a block into the workspace. Double-click a number to type a new value.</div>
       </div>
 
-      <div id="pythonTools" class="hidden">
-        <div class="category python-cat">Brain Screen</div>
-        <div class="python-help">Click a command to insert it into the Python editor.</div>
-        <button class="python-snippet" data-snippet="brain.screen.clear_screen()" type="button">clear_screen()</button>
-        <button class="python-snippet" data-snippet="brain.screen.set_pen_color(Color.WHITE)" type="button">set_pen_color()</button>
-        <button class="python-snippet" data-snippet="brain.screen.set_fill_color(Color.BLUE)" type="button">set_fill_color()</button>
-        <button class="python-snippet" data-snippet="brain.screen.set_pen_width(2)" type="button">set_pen_width()</button>
-        <button class="python-snippet" data-snippet="brain.screen.draw_pixel(90, 90)" type="button">draw_pixel()</button>
-        <button class="python-snippet" data-snippet="brain.screen.draw_line(30, 30, 300, 150)" type="button">draw_line()</button>
-        <button class="python-snippet" data-snippet="brain.screen.draw_rectangle(60, 60, 180, 90)" type="button">draw_rectangle()</button>
-        <button class="python-snippet" data-snippet="brain.screen.draw_circle(240, 120, 45)" type="button">draw_circle()</button>
+      <div id="pythonTools" class="hidden python-menu">
+        <div class="python-menu-header">Screen <span class="python-menu-arrow">▼</span></div>
 
-        <div class="python-reference">
-          <strong>Colors</strong>
-          <div>Color.RED</div><div>Color.ORANGE</div><div>Color.YELLOW</div><div>Color.GREEN</div>
-          <div>Color.BLUE</div><div>Color.PURPLE</div><div>Color.CYAN</div><div>Color.WHITE</div><div>Color.BLACK</div>
+        <div class="python-section">
+          <div class="python-section-title">Mutators</div>
+          <button class="python-snippet" data-snippet="brain.screen.clear_screen()" type="button"><span class="py-prefix">brain.screen.</span><span class="py-method">clear_screen</span><span class="py-punct">()</span></button>
+          <button class="python-snippet" data-snippet="brain.screen.set_pen_width(10)" type="button"><span class="py-prefix">brain.screen.</span><span class="py-method">set_pen_width</span><span class="py-punct">(</span><span class="py-number">10</span><span class="py-punct">)</span></button>
+          <button class="python-snippet" data-snippet="brain.screen.set_pen_color(Color.RED)" data-cheat="colors" type="button"><span class="py-prefix">brain.screen.</span><span class="py-method">set_pen_color</span><span class="py-punct">(</span><span class="py-enum">Color.RED</span><span class="py-punct">)</span></button>
+          <button class="python-snippet" data-snippet="brain.screen.set_fill_color(Color.RED)" data-cheat="colors" type="button"><span class="py-prefix">brain.screen.</span><span class="py-method">set_fill_color</span><span class="py-punct">(</span><span class="py-enum">Color.RED</span><span class="py-punct">)</span></button>
         </div>
+
+        <div class="python-section">
+          <div class="python-section-title">Draw</div>
+          <button class="python-snippet" data-snippet="brain.screen.draw_pixel(0, 0)" type="button"><span class="py-prefix">brain.screen.</span><span class="py-method">draw_pixel</span><span class="py-punct">(</span><span class="py-number">0, 0</span><span class="py-punct">)</span></button>
+          <button class="python-snippet" data-snippet="brain.screen.draw_line(0, 0, 10, 10)" type="button"><span class="py-prefix">brain.screen.</span><span class="py-method">draw_line</span><span class="py-punct">(</span><span class="py-number">0, 0, 10, 10</span><span class="py-punct">)</span></button>
+          <button class="python-snippet" data-snippet="brain.screen.draw_rectangle(0, 0, 10, 10)" type="button"><span class="py-prefix">brain.screen.</span><span class="py-method">draw_rectangle</span><span class="py-punct">(</span><span class="py-number">0, 0, 10, 10</span><span class="py-punct">)</span></button>
+          <button class="python-snippet" data-snippet="brain.screen.draw_circle(0, 0, 10)" type="button"><span class="py-prefix">brain.screen.</span><span class="py-method">draw_circle</span><span class="py-punct">(</span><span class="py-number">0, 0, 10</span><span class="py-punct">)</span></button>
+        </div>
+
+        <div id="pythonColorCheat" class="python-cheat hidden">
+          <div class="python-cheat-title">Color Options</div>
+          <div class="python-cheat-grid">
+            <div class="python-cheat-color"><span class="python-cheat-swatch" style="background:red"></span>Color.RED</div>
+            <div class="python-cheat-color"><span class="python-cheat-swatch" style="background:orange"></span>Color.ORANGE</div>
+            <div class="python-cheat-color"><span class="python-cheat-swatch" style="background:yellow"></span>Color.YELLOW</div>
+            <div class="python-cheat-color"><span class="python-cheat-swatch" style="background:green"></span>Color.GREEN</div>
+            <div class="python-cheat-color"><span class="python-cheat-swatch" style="background:blue"></span>Color.BLUE</div>
+            <div class="python-cheat-color"><span class="python-cheat-swatch" style="background:purple"></span>Color.PURPLE</div>
+            <div class="python-cheat-color"><span class="python-cheat-swatch" style="background:cyan"></span>Color.CYAN</div>
+            <div class="python-cheat-color"><span class="python-cheat-swatch" style="background:white"></span>Color.WHITE</div>
+            <div class="python-cheat-color"><span class="python-cheat-swatch" style="background:black"></span>Color.BLACK</div>
+          </div>
+        </div>
+
+        <div class="python-menu-tip">Click a command to insert it into the Python editor.</div>
       </div>
     </aside>
 
@@ -1045,6 +1081,7 @@ function updateInfo(result){
 function setMode(nextMode){
   mode=nextMode;
   const python=mode==='python';
+  root.classList.toggle('python-mode',python);
   $('#blocksMode').classList.toggle('active',!python);
   $('#pythonMode').classList.toggle('active',python);
   $('#blocksTools').classList.toggle('hidden',python);
@@ -1111,6 +1148,8 @@ blocksWorkspace.addEventListener('drop',e=>{
 
 root.querySelectorAll('.python-snippet').forEach(button=>{
   button.addEventListener('click',()=>{
+    const cheat=$('#pythonColorCheat');
+    if(cheat)cheat.classList.toggle('hidden',button.dataset.cheat!=='colors');
     const snippet=button.dataset.snippet;
     const start=editor.selectionStart;
     const end=editor.selectionEnd;
