@@ -25,6 +25,10 @@
   --cursor:#7c3aed;
   --draw:#059669;
   --query:#d97706;
+  --code-object:#21759b;
+  --code-string:#d12f1b;
+  --code-number:#009c3b;
+  --code-enum:#e67e22;
 }
 body{margin:0;background:#f4f6f8;color:var(--ink);font-family:Arial,Helvetica,sans-serif}
 button,input,select,textarea{font:inherit}
@@ -66,10 +70,10 @@ button{cursor:pointer}
 .command-list{padding:3px 0 4px}
 .command{display:block;width:100%;height:auto;padding:3px 14px;border:0;border-radius:0;background:white;text-align:left;font:12px/1.35 Consolas,"Courier New",monospace;white-space:nowrap}
 .command:hover{background:#eef4fb}
-.obj,.method{color:#21759b}
-.string{color:#d12f1b}
-.number{color:#009c3b}
-.enum{color:#e67e22}
+.obj,.method{color:var(--code-object)}
+.string{color:var(--code-string)}
+.number{color:var(--code-number)}
+.enum{color:var(--code-enum)}
 
 /* BLOCK TOOLBOX */
 .toolbox-note{padding:7px 10px;border-bottom:1px solid #e2e6eb;background:#f8fafc;color:#687482;font-size:10px;line-height:1.35}
@@ -141,14 +145,12 @@ canvas{display:block;width:100%;aspect-ratio:2/1;border:1px solid #020303;border
 #syntaxHighlight::-webkit-scrollbar{display:none}
 #editor{z-index:2;resize:none;outline:0;background:transparent;color:transparent;caret-color:#f8fafc;-webkit-text-fill-color:transparent}
 #editor::selection{background:rgba(54,112,180,.52)}
-.syntax-keyword{color:#c586c0;font-weight:600}
-.syntax-string{color:#ce9178}
-.syntax-number{color:#b5cea8}
-.syntax-comment{color:#6a9955;font-style:italic}
-.syntax-vex-object{color:#4fc1ff}
-.syntax-vex-type{color:#4ec9b0}
-.syntax-method{color:#dcdcaa}
-.syntax-constant{color:#d7ba7d}
+.syntax-keyword{color:#d4d4d4;font-weight:600}
+.syntax-string{color:var(--code-string)}
+.syntax-number{color:var(--code-number)}
+.syntax-comment{color:#7c8794;font-style:italic}
+.syntax-vex-object,.syntax-method{color:var(--code-object)}
+.syntax-vex-type,.syntax-constant{color:var(--code-enum)}
 .syntax-operator{color:#d4d4d4}
 .workspace-message{padding:7px 9px;border-top:1px solid #343b45;background:#20262e;color:#adb7c2;font-size:10px}
 .code-check[hidden]{display:none}
