@@ -131,11 +131,25 @@ canvas{display:block;width:100%;aspect-ratio:2/1;border:1px solid #020303;border
 .example-select,.clear-blocks-btn{height:25px;padding:2px 7px;border:1px solid #cfd6df;border-radius:6px;background:white;font-size:10px}
 .example-select{max-width:132px;color:#334155}
 .filename-bar{display:flex;justify-content:space-between;padding:7px 9px;background:#242b34;color:#e6ebf1;font:10px Consolas,monospace}
-.editor-shell{display:grid;grid-template-columns:40px minmax(0,1fr);height:300px}
+.editor-shell{display:grid;grid-template-columns:40px minmax(0,1fr);height:300px;background:#161b22}
 #lineNumbers{margin:0;padding:11px 7px 11px 0;overflow:hidden;border-right:1px solid #2f3741;background:#11161c;color:#727d89;text-align:right;font:12px/1.55 Consolas,"Courier New",monospace}
 .line-number{display:block;min-height:1.55em;padding-right:2px;border-radius:3px}
 .line-number.has-error{background:#7f1d1d;color:#fff;font-weight:bold}
-#editor{width:100%;height:300px;resize:none;border:0;outline:0;padding:11px 12px;background:#161b22;color:#e7edf4;font:12px/1.55 Consolas,"Courier New",monospace;tab-size:4;white-space:pre;overflow:auto}
+.editor-code-layer{position:relative;min-width:0;height:300px;overflow:hidden;background:#161b22}
+#syntaxHighlight,#editor{position:absolute;inset:0;width:100%;height:300px;margin:0;border:0;padding:11px 12px;font:12px/1.55 Consolas,"Courier New",monospace;tab-size:4;white-space:pre;overflow:auto}
+#syntaxHighlight{z-index:1;pointer-events:none;background:#161b22;color:#d4d4d4;scrollbar-width:none}
+#syntaxHighlight::-webkit-scrollbar{display:none}
+#editor{z-index:2;resize:none;outline:0;background:transparent;color:transparent;caret-color:#f8fafc;-webkit-text-fill-color:transparent}
+#editor::selection{background:rgba(54,112,180,.52)}
+.syntax-keyword{color:#c586c0;font-weight:600}
+.syntax-string{color:#ce9178}
+.syntax-number{color:#b5cea8}
+.syntax-comment{color:#6a9955;font-style:italic}
+.syntax-vex-object{color:#4fc1ff}
+.syntax-vex-type{color:#4ec9b0}
+.syntax-method{color:#dcdcaa}
+.syntax-constant{color:#d7ba7d}
+.syntax-operator{color:#d4d4d4}
 .workspace-message{padding:7px 9px;border-top:1px solid #343b45;background:#20262e;color:#adb7c2;font-size:10px}
 .code-check[hidden]{display:none}
 .code-check{display:flex;align-items:flex-start;gap:10px;padding:11px 12px;border-top:2px solid #dc2626;border-bottom:1px solid #fecaca;background:#fff1f2;color:#7f1d1d}
@@ -359,7 +373,10 @@ canvas{display:block;width:100%;aspect-ratio:2/1;border:1px solid #020303;border
           <div class="filename-bar"><span>main.py</span><span id="pythonStatus">Live</span></div>
           <div class="editor-shell">
             <pre id="lineNumbers"></pre>
-            <textarea id="editor" spellcheck="false" aria-label="Python code editor"></textarea>
+            <div class="editor-code-layer">
+              <pre id="syntaxHighlight" aria-hidden="true"></pre>
+              <textarea id="editor" wrap="off" spellcheck="false" aria-label="Python code editor"></textarea>
+            </div>
           </div>
         </div>
 
@@ -448,6 +465,7 @@ buffer.height=240;
 const bctx=buffer.getContext("2d");
 
 const editor=byId("editor");
+const syntaxHighlight=byId("syntaxHighlight");
 const lineNumbers=byId("lineNumbers");
 const projectName=byId("projectName");
 const fileInput=byId("projectFileInput");
@@ -912,6 +930,128 @@ document.addEventListener("click",event=>{
 
 /* LINE NUMBERS */
 
+const pythonKeywords=new Set([
+  "and","as","assert","async","await","break","class","continue","def",
+  "del","elif","else","except","False","finally","for","from","global",
+  "if","import","in","is","lambda","None","nonlocal","not","or","pass",
+  "raise","return","True","try","while","with","yield"
+]);
+
+const vexTypes=new Set([
+  "Brain","Color","FontType","MSEC","PERCENT","SECONDS","VOLT","vex"
+]);
+
+const vexObjects=new Set(["brain","screen"]);
+
+function escapeSyntaxText(value){
+  return value
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;");
+}
+
+function syntaxToken(className,value){
+  return '<span class="'+className+'">'+escapeSyntaxText(value)+'</span>';
+}
+
+function highlightPython(source){
+  let output="";
+  let index=0;
+
+  while(index<source.length){
+    const character=source[index];
+
+    if(character==="#"){
+      let end=index;
+      while(end<source.length && source[end]!=="\n")end++;
+      output+=syntaxToken("syntax-comment",source.slice(index,end));
+      index=end;
+      continue;
+    }
+
+    if(character==='"' || character==="'"){
+      const quote=character;
+      const triple=source.slice(index,index+3)===quote.repeat(3);
+      const delimiter=triple?quote.repeat(3):quote;
+      let end=index+delimiter.length;
+
+      while(end<source.length){
+        if(source.slice(end,end+delimiter.length)===delimiter){
+          end+=delimiter.length;
+          break;
+        }
+        if(!triple && source[end]==="\n")break;
+        if(source[end]==="\\" && end+1<source.length){
+          end+=2;
+        }
+        else{
+          end++;
+        }
+      }
+
+      output+=syntaxToken("syntax-string",source.slice(index,end));
+      index=end;
+      continue;
+    }
+
+    if(/[0-9]/.test(character) && (index===0 || !/[A-Za-z0-9_]/.test(source[index-1]))){
+      const match=source.slice(index).match(/^(?:0[xX][0-9a-fA-F]+|0[bB][01]+|0[oO][0-7]+|(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)/);
+      if(match){
+        output+=syntaxToken("syntax-number",match[0]);
+        index+=match[0].length;
+        continue;
+      }
+    }
+
+    if(/[A-Za-z_]/.test(character)){
+      const match=source.slice(index).match(/^[A-Za-z_][A-Za-z0-9_]*/);
+      const word=match[0];
+      let className="";
+      let previous=index-1;
+      let next=index+word.length;
+
+      while(previous>=0 && /\s/.test(source[previous]))previous--;
+      while(next<source.length && /\s/.test(source[next]))next++;
+
+      if(pythonKeywords.has(word))className="syntax-keyword";
+      else if(vexTypes.has(word))className="syntax-vex-type";
+      else if(vexObjects.has(word))className="syntax-vex-object";
+      else if(previous>=0 && source[previous]==="."){
+        className=next<source.length && source[next]==="("
+          ?"syntax-method"
+          :"syntax-constant";
+      }
+      else if(next<source.length && source[next]==="(")className="syntax-method";
+
+      output+=className?syntaxToken(className,word):escapeSyntaxText(word);
+      index+=word.length;
+      continue;
+    }
+
+    if("+-*/%=<>!&|^~:@".includes(character)){
+      output+=syntaxToken("syntax-operator",character);
+    }
+    else{
+      output+=escapeSyntaxText(character);
+    }
+    index++;
+  }
+
+  return output;
+}
+
+function syncEditorScroll(){
+  lineNumbers.scrollTop=editor.scrollTop;
+  syntaxHighlight.scrollTop=editor.scrollTop;
+  syntaxHighlight.scrollLeft=editor.scrollLeft;
+}
+
+function updateSyntaxHighlight(){
+  const source=editor.value;
+  syntaxHighlight.innerHTML=highlightPython(source)+(source.endsWith("\n")?" ":"");
+  syncEditorScroll();
+}
+
 function updateLineNumbers(){
   const count=editor.value.split("\n").length;
   const fragment=document.createDocumentFragment();
@@ -922,10 +1062,10 @@ function updateLineNumbers(){
     fragment.appendChild(line);
   }
   lineNumbers.replaceChildren(fragment);
-  lineNumbers.scrollTop=editor.scrollTop;
+  updateSyntaxHighlight();
 }
 
-editor.addEventListener("scroll",()=>{lineNumbers.scrollTop=editor.scrollTop;});
+editor.addEventListener("scroll",syncEditorScroll);
 projectName.addEventListener("input",scheduleAutosave);
 
 /* HISTORY */
