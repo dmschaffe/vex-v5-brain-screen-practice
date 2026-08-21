@@ -1968,26 +1968,99 @@ function clippedCanvasText(graphics,text,maxWidth){
   return clipped+"…";
 }
 
-function blockSnapshotLine(block){
+function blockSnapshotParts(block){
   const args=block.args || {};
+  const label=text=>({text:String(text),input:false});
+  const input=value=>({text:String(value ?? ""),input:true});
   switch(block.type){
-    case "print": return 'print "'+(args.text ?? "")+'"';
-    case "setCursor": return "set cursor row "+args.row+" column "+args.col;
-    case "nextRow": return "next row";
-    case "clearRow": return "clear row "+String(args.row ?? "CURRENT").toLowerCase();
-    case "rowQuery": return "cursor row";
-    case "columnQuery": return "cursor column";
-    case "clearScreen": return "clear screen";
-    case "setFont": return "set font "+args.font;
-    case "setPenWidth": return "set pen width "+args.width;
-    case "setPenColor": return "set pen color "+args.color;
-    case "setFillColor": return "set fill color "+args.color;
-    case "drawPixel": return "draw pixel ("+args.x+", "+args.y+")";
-    case "drawLine": return "draw line ("+args.x1+", "+args.y1+") to ("+args.x2+", "+args.y2+")";
-    case "drawRectangle": return "draw rectangle ("+args.x+", "+args.y+") "+args.width+" × "+args.height;
-    case "drawCircle": return "draw circle ("+args.x+", "+args.y+") radius "+args.radius;
-    default: return "unknown block";
+    case "print": return [label("print"),input(args.text)];
+    case "setCursor": return [label("set cursor row"),input(args.row),label("column"),input(args.col)];
+    case "nextRow": return [label("next row")];
+    case "clearRow": return [label("clear row"),input(args.row ?? "CURRENT")];
+    case "rowQuery": return [label("cursor row")];
+    case "columnQuery": return [label("cursor column")];
+    case "clearScreen": return [label("clear screen")];
+    case "setFont": return [label("set font"),input(args.font)];
+    case "setPenWidth": return [label("set pen width"),input(args.width)];
+    case "setPenColor": return [label("set pen color"),input(args.color)];
+    case "setFillColor": return [label("set fill color"),input(args.color)];
+    case "drawPixel": return [label("draw pixel x"),input(args.x),label("y"),input(args.y)];
+    case "drawLine": return [label("draw line x1"),input(args.x1),label("y1"),input(args.y1),label("x2"),input(args.x2),label("y2"),input(args.y2)];
+    case "drawRectangle": return [label("draw rectangle x"),input(args.x),label("y"),input(args.y),label("width"),input(args.width),label("height"),input(args.height)];
+    case "drawCircle": return [label("draw circle center x"),input(args.x),label("y"),input(args.y),label("radius"),input(args.radius)];
+    default: return [label("unknown block")];
   }
+}
+
+function drawSnapshotBlock(graphics,block,x,y,maxWidth){
+  const category=blockCategories[block.type] || "mutator-block";
+  const query=category==="query-block";
+  const fill={
+    "cursor-block":"#7c3aed",
+    "mutator-block":"#2563eb",
+    "draw-block":"#059669",
+    "query-block":"#d97706"
+  }[category];
+  const parts=blockSnapshotParts(block);
+  const height=query?32:35;
+  const gap=5;
+
+  const widths=parts.map(part=>{
+    graphics.font=part.input
+      ?'10px Consolas,"Courier New",monospace'
+      :'bold 10px Arial,Helvetica,sans-serif';
+    const measured=graphics.measureText(part.text).width;
+    return part.input
+      ?Math.min(180,Math.max(28,measured+12))
+      :measured;
+  });
+  const contentWidth=widths.reduce((total,width)=>total+width,0)+Math.max(0,parts.length-1)*gap;
+  const width=Math.min(maxWidth,Math.max(query?150:205,contentWidth+28));
+
+  graphics.fillStyle="rgba(30,41,59,.18)";
+  roundedRectPath(graphics,x+1,y+3,width,height,query?16:6);
+  graphics.fill();
+  graphics.fillStyle=fill;
+  roundedRectPath(graphics,x,y,width,height,query?16:6);
+  graphics.fill();
+
+  if(!query){
+    graphics.fillStyle="rgba(255,255,255,.28)";
+    roundedRectPath(graphics,x,y+9,6,16,3);
+    graphics.fill();
+    graphics.fillStyle=fill;
+    roundedRectPath(graphics,x+24,y+height-2,29,8,4);
+    graphics.fill();
+  }
+
+  graphics.save();
+  roundedRectPath(graphics,x,y,width,height,query?16:6);
+  graphics.clip();
+  graphics.textBaseline="middle";
+  let cursorX=x+14;
+  parts.forEach((part,index)=>{
+    const partWidth=widths[index];
+    if(part.input){
+      graphics.fillStyle="rgba(255,255,255,.96)";
+      roundedRectPath(graphics,cursorX,y+7,partWidth,height-14,4);
+      graphics.fill();
+      graphics.strokeStyle="rgba(15,23,42,.22)";
+      graphics.lineWidth=1;
+      graphics.stroke();
+      graphics.fillStyle="#1f2937";
+      graphics.font='10px Consolas,"Courier New",monospace';
+      graphics.fillText(clippedCanvasText(graphics,part.text,partWidth-10),cursorX+5,y+height/2+.5);
+    }
+    else{
+      graphics.fillStyle="#ffffff";
+      graphics.font="bold 10px Arial,Helvetica,sans-serif";
+      graphics.fillText(part.text,cursorX,y+height/2+.5);
+    }
+    cursorX+=partWidth+gap;
+  });
+  graphics.restore();
+  graphics.textBaseline="alphabetic";
+  return 43;
 }
 
 function drawSnapshotInfo(graphics,label,value,x,y,width){
@@ -2003,7 +2076,11 @@ function drawSnapshotInfo(graphics,label,value,x,y,width){
 function createProjectSnapshotCanvas(){
   const output=document.createElement("canvas");
   output.width=1280;
-  output.height=720;
+  const programAreaHeight=activeMode==="blocks"
+    ?Math.max(536,blockProgram.length*43+20)
+    :536;
+  const workspacePanelHeight=programAreaHeight+62;
+  output.height=Math.max(720,workspacePanelHeight+122);
   const graphics=output.getContext("2d");
 
   graphics.fillStyle="#f4f6f8";
@@ -2015,35 +2092,42 @@ function createProjectSnapshotCanvas(){
   graphics.font="13px Arial,Helvetica,sans-serif";
   graphics.fillText("VEX V5 Screen Simulator • "+(activeMode==="python"?"Python":"Blocks"),40,65);
 
-  drawSnapshotPanel(graphics,40,82,590,598);
+  drawSnapshotPanel(graphics,40,82,590,workspacePanelHeight);
   graphics.fillStyle="#20242a";
   graphics.font="bold 15px Arial,Helvetica,sans-serif";
   graphics.fillText(activeMode==="python"?"main.py":"main.blocks",58,112);
   graphics.fillStyle="#161b22";
-  roundedRectPath(graphics,55,126,560,536,8);
+  roundedRectPath(graphics,55,126,560,programAreaHeight,8);
   graphics.fill();
 
-  const lines=activeMode==="python"
-    ?editor.value.split("\n")
-    :blockProgram.map(blockSnapshotLine);
-  graphics.font='13px Consolas,"Courier New",monospace';
-  const maxLines=29;
-  lines.slice(0,maxLines).forEach((line,index)=>{
-    const y=151+index*17;
-    graphics.fillStyle="#758191";
-    graphics.textAlign="right";
-    graphics.fillText(String(index+1),84,y);
-    graphics.fillStyle="#e7edf4";
-    graphics.textAlign="left";
-    graphics.fillText(clippedCanvasText(graphics,line,505),96,y);
-  });
-  if(lines.length>maxLines){
-    graphics.fillStyle="#aab4bf";
-    graphics.fillText("… "+(lines.length-maxLines)+" more lines",96,649);
+  if(activeMode==="python"){
+    const lines=editor.value.split("\n");
+    graphics.font='13px Consolas,"Courier New",monospace';
+    const maxLines=29;
+    lines.slice(0,maxLines).forEach((line,index)=>{
+      const y=151+index*17;
+      graphics.fillStyle="#758191";
+      graphics.textAlign="right";
+      graphics.fillText(String(index+1),84,y);
+      graphics.fillStyle="#e7edf4";
+      graphics.textAlign="left";
+      graphics.fillText(clippedCanvasText(graphics,line,505),96,y);
+    });
+    if(lines.length>maxLines){
+      graphics.fillStyle="#aab4bf";
+      graphics.fillText("… "+(lines.length-maxLines)+" more lines",96,649);
+    }
   }
-  if(!lines.length){
+  else if(blockProgram.length){
+    let blockY=140;
+    blockProgram.forEach(block=>{
+      blockY+=drawSnapshotBlock(graphics,block,74,blockY,520);
+    });
+  }
+  else{
     graphics.fillStyle="#aab4bf";
-    graphics.fillText("No blocks added yet.",96,151);
+    graphics.font="13px Arial,Helvetica,sans-serif";
+    graphics.fillText("No blocks added yet.",78,154);
   }
   graphics.textAlign="left";
 
