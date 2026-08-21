@@ -15,6 +15,4 @@ An interactive classroom simulator for practicing VEX V5 Brain screen programmin
 
 ## Live simulator
 
-[Open the VEX V5 Screen Simulator](https://vex-v5-screen-blocks.schaffx.chatgpt.site)
-
 The simulator is designed for classroom practice and supports the Screen commands shown in its command menu.
