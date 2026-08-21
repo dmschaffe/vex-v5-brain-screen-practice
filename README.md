@@ -15,4 +15,6 @@ An interactive classroom simulator for practicing VEX V5 Brain screen programmin
 
 ## Live simulator
 
+[Open the VEX V5 Brain Screen Practice simulator](https://dmschaffe.github.io/vex-v5-brain-screen-practice/)
+
 The simulator is designed for classroom practice and supports the Screen commands shown in its command menu.
