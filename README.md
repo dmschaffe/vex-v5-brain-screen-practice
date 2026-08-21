@@ -5,6 +5,7 @@ An interactive classroom simulator for practicing VEX V5 Brain screen programmin
 ## Features
 
 - Separate Python and Blocks workspaces
+- VEX-style live syntax highlighting in the Python workspace
 - Live 480 × 240 V5 Brain screen preview
 - Text, cursor, color, font, and drawing commands
 - Matching practice grids for VEX font sizes
