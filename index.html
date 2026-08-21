@@ -4,590 +4,454 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>VEX V5 Screen Simulator</title>
+<meta name="description" content="Practice VEX V5 Brain screen programming with separate Python and Blocks workspaces.">
+<meta property="og:title" content="VEX V5 Screen Simulator">
+<meta property="og:description" content="Practice Python and Blocks on a simulated VEX V5 Brain screen.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://vex-v5-screen-blocks.schaffx.chatgpt.site/">
+<meta property="og:image" content="https://vex-v5-screen-blocks.schaffx.chatgpt.site/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="VEX V5 Screen Simulator">
+<meta name="twitter:description" content="Practice Python and Blocks on a simulated VEX V5 Brain screen.">
+<meta name="twitter:image" content="https://vex-v5-screen-blocks.schaffx.chatgpt.site/og.png">
 
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#f4f6f8;color:#20242a;font-family:Arial,Helvetica,sans-serif}
+:root{
+  --border:#d5dbe2;
+  --soft:#f4f6f8;
+  --ink:#20242a;
+  --mutator:#2563eb;
+  --cursor:#7c3aed;
+  --draw:#059669;
+  --query:#d97706;
+}
+body{margin:0;background:#f4f6f8;color:var(--ink);font-family:Arial,Helvetica,sans-serif}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
 .app{min-height:100vh;padding:10px}
 
 /* TOP BAR */
 .topbar{display:flex;align-items:flex-end;gap:7px;flex-wrap:wrap;margin-bottom:10px}
 .project{display:flex;flex-direction:column;gap:3px}
 .project label{font-size:11px}
-.project input{width:155px;height:30px;padding:5px 8px;border:1px solid #cfd6df;border-radius:7px;background:white}
-
-button{height:31px;padding:5px 11px;border:1px solid #cfd6df;border-radius:8px;background:white;color:#20242a;font-size:14px;cursor:pointer}
-button:hover:not(:disabled){background:#f0f3f7}
-button:disabled{color:#9aa2ad;background:#f3f5f7;cursor:default}
+.project input{width:155px;height:31px;padding:5px 8px;border:1px solid #cfd6df;border-radius:7px;background:white}
+.topbar>button,.grid-control>button{height:31px;padding:5px 11px;border:1px solid #cfd6df;border-radius:8px;background:white;color:#20242a;font-size:13px}
+.topbar>button:hover:not(:disabled),.grid-control>button:hover{background:#f0f3f7}
+.topbar>button:disabled{color:#9aa2ad;background:#f3f5f7;cursor:default}
 .file-input{display:none}
+
+.mode-control{display:flex;align-items:center;height:31px;padding:2px;border:1px solid #bdc7d3;border-radius:8px;background:#e8edf3}
+.mode-button{height:25px;padding:2px 11px;border:0;border-radius:6px;background:transparent;color:#56616e;font-size:12px;font-weight:bold}
+.mode-button.active{background:#fff;color:#1f2937;box-shadow:0 1px 3px rgba(0,0,0,.16)}
+.mode-button:focus-visible{outline:2px solid #3274ed;outline-offset:1px}
 
 /* GRID MENU */
 .grid-control{position:relative;display:inline-block}
-
-.grid-popup{
-  display:none;
-  position:absolute;
-  top:calc(100% + 4px);
-  left:0;
-  z-index:100;
-  min-width:225px;
-  overflow:hidden;
-  border:1px solid #c9d0d8;
-  border-radius:7px;
-  background:white;
-  box-shadow:0 7px 18px rgba(0,0,0,.16)
-}
-
+.grid-popup{display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:100;min-width:225px;overflow:hidden;border:1px solid #c9d0d8;border-radius:7px;background:white;box-shadow:0 7px 18px rgba(0,0,0,.16)}
 .grid-popup-title{padding:6px 9px;border-bottom:1px solid #d8dde3;background:#f0f2f4;font-size:12px;font-weight:bold}
 .grid-subtitle{padding:6px 9px 2px;color:#717b86;font-size:10px;font-weight:bold}
-
-.grid-option{
-  display:block;
-  width:100%;
-  height:auto;
-  padding:6px 9px;
-  border:0;
-  border-radius:0;
-  background:white;
-  text-align:left;
-  font-size:11px
-}
-
+.grid-option{display:block;width:100%;height:auto;padding:6px 9px;border:0;border-radius:0;background:white;text-align:left;font-size:11px}
 .grid-option:hover{background:#eef4fb}
 .grid-option.active{background:#e5efff;font-weight:bold}
 .grid-font{font-family:Consolas,"Courier New",monospace;font-weight:bold}
 .grid-size{margin-left:5px;color:#717b86;font-size:10px;font-weight:normal}
 
 /* MAIN */
-.main{display:grid;grid-template-columns:275px minmax(0,1fr) 190px;gap:10px;align-items:start}
-.panel{overflow:hidden;border:1px solid #d5d9de;border-radius:5px;background:white}
-.center{min-width:0}
-
-/* VEX COMMAND MENU */
+.main{display:grid;grid-template-columns:275px minmax(430px,1fr) 190px;gap:10px;align-items:start}
+.panel{overflow:hidden;border:1px solid var(--border);border-radius:5px;background:white}
+.center{display:grid;grid-template-columns:minmax(340px,.95fr) minmax(415px,1.15fr);gap:10px;align-items:start;min-width:0}
 .menu-header{padding:6px 10px;border-bottom:1px solid #d9d9d9;background:#efefef;font-size:17px;font-weight:bold}
 .section-title{padding:4px 14px 2px;border-bottom:1px solid #dedede;color:#111;font-size:16px}
 .command-list{padding:3px 0 4px}
-
-.command{
-  display:block;
-  width:100%;
-  height:auto;
-  padding:3px 14px;
-  border:0;
-  border-radius:0;
-  background:white;
-  text-align:left;
-  font:12px/1.35 Consolas,"Courier New",monospace;
-  white-space:nowrap
-}
-
+.command{display:block;width:100%;height:auto;padding:3px 14px;border:0;border-radius:0;background:white;text-align:left;font:12px/1.35 Consolas,"Courier New",monospace;white-space:nowrap}
 .command:hover{background:#eef4fb}
 .obj,.method{color:#21759b}
 .string{color:#d12f1b}
 .number{color:#009c3b}
 .enum{color:#e67e22}
 
+/* BLOCK TOOLBOX */
+.toolbox-note{padding:7px 10px;border-bottom:1px solid #e2e6eb;background:#f8fafc;color:#687482;font-size:10px;line-height:1.35}
+.block-palette{padding:7px 8px 8px}
+.palette-block{position:relative;display:block;width:100%;min-height:31px;margin:0 0 6px;padding:6px 10px 6px 14px;border:0;border-radius:5px;color:white;text-align:left;font:11px/1.3 Arial,Helvetica,sans-serif;box-shadow:inset 0 -2px rgba(0,0,0,.18),0 1px 2px rgba(0,0,0,.12)}
+.palette-block::before{content:"";position:absolute;left:0;top:9px;width:6px;height:13px;border-radius:0 5px 5px 0;background:rgba(255,255,255,.35)}
+.palette-block:hover{filter:brightness(1.08)}
+.palette-block.cursor-block{background:var(--cursor)}
+.palette-block.mutator-block{background:var(--mutator)}
+.palette-block.draw-block{background:var(--draw)}
+.palette-block.query-block{width:86%;border-radius:16px;background:var(--query)}
+.palette-swatch{display:inline-block;min-width:26px;padding:1px 4px;border-radius:4px;background:rgba(255,255,255,.25);font-family:Consolas,monospace;text-align:center}
+
 /* CHEAT BOX */
 .cheat-box{display:none;margin:8px 10px 12px;border:1px solid #d0d5dc;background:white}
-.cheat-head{padding:5px 8px;border-bottom:1px solid #ddd;background:#f1f1f1;font-size:13px;font-weight:bold}
+.cheat-head{display:flex;align-items:center;justify-content:space-between;padding:5px 8px;border-bottom:1px solid #ddd;background:#f1f1f1;font-size:13px;font-weight:bold}
+.cheat-close{width:22px;height:22px;padding:0;border:0;background:transparent;color:#59636f;font-size:16px}
 .cheat-body{padding:6px 8px}
 .cheat-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 18px}
-
-.cheat-item{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  height:auto;
-  padding:0;
-  border:0;
-  background:transparent;
-  font:11px/1.4 Consolas,"Courier New",monospace;
-  text-align:left
-}
-
-.cheat-item:hover{background:transparent;text-decoration:underline}
+.cheat-item{display:flex;align-items:center;gap:6px;height:auto;padding:0;border:0;background:transparent;font:11px/1.4 Consolas,"Courier New",monospace;text-align:left}
+.cheat-item:hover{text-decoration:underline}
 .dot{width:9px;height:9px;flex:none;border:1px solid rgba(0,0,0,.35);border-radius:50%}
 .cheat-sep{height:1px;margin:8px 0 7px;background:#d8d8d8}
 .cheat-foot{color:#666;font-size:10px}
 .font-list{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px}
-
-.font-item{
-  height:auto;
-  padding:0;
-  border:0;
-  background:transparent;
-  color:#e67e22;
-  font:11px/1.4 Consolas,"Courier New",monospace;
-  text-align:left
-}
-
-.font-item:hover{background:transparent;text-decoration:underline}
+.font-item{height:auto;padding:0;border:0;background:transparent;color:#e67e22;font:11px/1.4 Consolas,"Courier New",monospace;text-align:left}
+.font-item:hover{text-decoration:underline}
 
 /* BRAIN */
-.brain{
-  width:100%;
-  max-width:650px;
-  margin:0 auto 10px;
-  padding:13px;
-  border:3px solid #232a31;
-  border-radius:24px;
-  background:linear-gradient(#59616a,#323940)
-}
-
-.brain-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;color:white;font-size:10px;font-weight:bold}
-.v5{padding:3px 8px;border-radius:10px;background:#20262d}
-.brain-state{padding:3px 8px;border-radius:10px;background:#3274ed;font-size:8px}
-
-/* SCREEN + OUTSIDE LABELS */
-.screen-layout{display:grid;grid-template-columns:42px minmax(0,1fr);grid-template-rows:28px auto}
-.x-axis{grid-column:2;position:relative;color:white;font-size:8px}
+.brain{position:relative;isolation:isolate;overflow:hidden;width:100%;max-width:none;margin:0;padding:14px 15px 16px;border:4px solid #1c2126;border-radius:18px;background:linear-gradient(145deg,rgba(255,255,255,.14),transparent 38%),linear-gradient(180deg,#737d86 0,#4c555e 23%,#343b42 100%);box-shadow:0 7px 16px rgba(20,26,31,.28),inset 0 0 0 2px rgba(183,193,201,.3),inset 0 -10px 18px rgba(0,0,0,.22)}
+.brain::before{content:"";position:absolute;z-index:0;inset:0;pointer-events:none;background:radial-gradient(circle at 12px 12px,#101316 0 2px,#929ba3 2.5px 4px,transparent 4.5px),radial-gradient(circle at calc(100% - 12px) 12px,#101316 0 2px,#929ba3 2.5px 4px,transparent 4.5px),radial-gradient(circle at 12px calc(100% - 12px),#101316 0 2px,#929ba3 2.5px 4px,transparent 4.5px),radial-gradient(circle at calc(100% - 12px) calc(100% - 12px),#101316 0 2px,#929ba3 2.5px 4px,transparent 4.5px)}
+.brain-top{position:relative;z-index:1;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;min-height:28px;margin:6px 8px 7px;padding:4px 8px 5px;border:1px solid #20262b;border-radius:7px;background:linear-gradient(180deg,#4b545c,#30373e);box-shadow:inset 0 1px rgba(255,255,255,.14),0 1px 2px rgba(0,0,0,.25);color:white;font-size:10px;font-weight:bold}
+.v5{display:flex;align-items:baseline;gap:4px;padding:0;background:transparent;white-space:nowrap}
+.vex-mark{color:#ef2632;font-size:13px;font-style:italic;font-weight:900;letter-spacing:-1px;text-shadow:0 1px #111}
+.v5-mark{color:#f4f6f8;font-size:10px;font-weight:900;letter-spacing:.03em}
+.brain-name{color:#d8dde2;font-size:8px;letter-spacing:.16em;text-align:center}
+.brain-state{display:flex;align-items:center;gap:4px;padding:3px 7px;border:1px solid #152b47;border-radius:9px;background:linear-gradient(#3d87ec,#245da9);font-size:7px;letter-spacing:.06em}
+.brain-state::before{content:"";width:5px;height:5px;border:1px solid #c8fbd2;border-radius:50%;background:#5ee379;box-shadow:0 0 5px #70ed88}
+.brain-port-strip{position:relative;z-index:1;display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:3px;margin:0 10px;padding:3px 4px;border:1px solid #242a2f;border-radius:5px;background:linear-gradient(#343b41,#20262b);box-shadow:inset 0 1px 3px rgba(0,0,0,.7),0 1px rgba(255,255,255,.12)}
+.brain-port-strip span{display:flex;height:15px;align-items:center;justify-content:center;border:1px solid #080a0c;border-radius:2px;background:linear-gradient(#171b1e,#090b0d);box-shadow:inset 0 0 0 2px #23292e;color:#c4ccd2;font:6px/1 Arial,Helvetica,sans-serif}
+.port-strip-top{margin-bottom:0}
+.port-strip-bottom{margin-top:7px}
+.screen-layout{position:relative;z-index:1;display:grid;grid-template-columns:34px minmax(0,1fr) 34px;grid-template-rows:25px auto;padding:5px 3px 7px;border:2px solid #252b30;border-radius:12px;background:linear-gradient(145deg,#4b545c,#272e34);box-shadow:inset 0 0 0 1px rgba(166,177,186,.18),inset 0 -5px 10px rgba(0,0,0,.25)}
+.screen-layout::after{content:"↩";position:absolute;right:6px;top:calc(50% + 7px);display:flex;width:24px;height:38px;align-items:center;justify-content:center;transform:translateY(-50%);border:2px solid #15191d;border-radius:6px;background:linear-gradient(90deg,#4b545c,#252b31);box-shadow:inset 1px 1px rgba(255,255,255,.16),inset -2px -2px rgba(0,0,0,.35);color:#bcc4ca;font-size:13px;font-weight:bold;text-shadow:0 1px #111}
+.axis-corner{position:relative;grid-column:1;grid-row:1}
+.axis-corner::after{content:"";position:absolute;left:50%;top:50%;width:6px;height:6px;transform:translate(-50%,-30%);border:1px solid #142119;border-radius:50%;background:#59d774;box-shadow:0 0 5px rgba(89,215,116,.8)}
+.x-axis{position:relative;grid-column:2;grid-row:1;color:white;font-size:8px}
 .x-axis span{position:absolute;bottom:3px;white-space:nowrap;transform:translateX(-50%)}
-.y-axis{position:relative;color:white;font-size:8px}
+.y-axis{position:relative;grid-column:1;grid-row:2;color:white;font-size:8px}
 .y-axis span{position:absolute;right:6px;white-space:nowrap;transform:translateY(-50%)}
+.screen-bezel{grid-column:2;grid-row:2;padding:7px;border:3px solid #111519;border-radius:10px;background:linear-gradient(145deg,#171c20,#050607);box-shadow:inset 0 0 0 2px #242b30,0 2px 5px rgba(0,0,0,.5)}
+canvas{display:block;width:100%;aspect-ratio:2/1;border:1px solid #020303;border-radius:2px;background:#000;cursor:crosshair}
 
-.screen-bezel{padding:9px;border:2px solid #1b2025;border-radius:13px;background:#080a0c}
-
-canvas{
-  display:block;
-  width:100%;
-  aspect-ratio:2/1;
-  background:#000;
-  cursor:crosshair
-}
-
-/* EDITOR */
-.workspace{overflow:hidden;border:1px solid #d6dce3;border-radius:11px;background:#161b22}
-
-.workspace-title{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:7px 9px;
-  border-bottom:1px solid #d6dce3;
-  background:white;
-  font-size:13px;
-  font-weight:bold
-}
-
-.example-btn{height:23px;padding:2px 7px;border-radius:6px;font-size:10px}
-
-.filename-bar{
-  display:flex;
-  justify-content:space-between;
-  padding:7px 9px;
-  background:#242b34;
-  color:#e6ebf1;
-  font:10px Consolas,monospace
-}
-
+/* WORKSPACES */
+.workspace{min-width:0;overflow:hidden;border:1px solid #d6dce3;border-radius:11px;background:#161b22}
+.workspace-title{display:flex;justify-content:space-between;align-items:center;padding:7px 9px;border-bottom:1px solid #d6dce3;background:white;font-size:13px;font-weight:bold}
+.workspace-title-actions{display:flex;align-items:center;gap:7px}
+.mode-badge{padding:3px 7px;border-radius:10px;background:#e8eef8;color:#245a9b;font-size:9px;text-transform:uppercase;letter-spacing:.04em}
+.example-select,.clear-blocks-btn{height:25px;padding:2px 7px;border:1px solid #cfd6df;border-radius:6px;background:white;font-size:10px}
+.example-select{max-width:132px;color:#334155}
+.filename-bar{display:flex;justify-content:space-between;padding:7px 9px;background:#242b34;color:#e6ebf1;font:10px Consolas,monospace}
 .editor-shell{display:grid;grid-template-columns:40px minmax(0,1fr);height:300px}
+#lineNumbers{margin:0;padding:11px 7px 11px 0;overflow:hidden;border-right:1px solid #2f3741;background:#11161c;color:#727d89;text-align:right;font:12px/1.55 Consolas,"Courier New",monospace}
+.line-number{display:block;min-height:1.55em;padding-right:2px;border-radius:3px}
+.line-number.has-error{background:#7f1d1d;color:#fff;font-weight:bold}
+#editor{width:100%;height:300px;resize:none;border:0;outline:0;padding:11px 12px;background:#161b22;color:#e7edf4;font:12px/1.55 Consolas,"Courier New",monospace;tab-size:4;white-space:pre;overflow:auto}
+.workspace-message{padding:7px 9px;border-top:1px solid #343b45;background:#20262e;color:#adb7c2;font-size:10px}
+.code-check[hidden]{display:none}
+.code-check{display:flex;align-items:flex-start;gap:10px;padding:11px 12px;border-top:2px solid #dc2626;border-bottom:1px solid #fecaca;background:#fff1f2;color:#7f1d1d}
+.code-check-icon{display:flex;width:25px;height:25px;flex:none;align-items:center;justify-content:center;border-radius:50%;background:#b91c1c;color:white;font-size:15px;font-weight:bold;line-height:1}
+.code-check-content{min-width:0;flex:1}
+.code-check-title{color:#991b1b;font-size:12px;font-weight:800}
+.code-message{margin:4px 0 0;padding-left:20px;font-size:10px;font-weight:600;line-height:1.5;overflow-wrap:anywhere}
+.code-message li+li{margin-top:3px}
 
-#lineNumbers{
-  margin:0;
-  padding:11px 7px 11px 0;
-  overflow:hidden;
-  border-right:1px solid #2f3741;
-  background:#11161c;
-  color:#727d89;
-  text-align:right;
-  font:12px/1.55 Consolas,"Courier New",monospace
-}
+.blocks-shell{height:300px;overflow:auto;padding:12px;background-color:#edf1f5;background-image:linear-gradient(rgba(125,139,154,.09) 1px,transparent 1px),linear-gradient(90deg,rgba(125,139,154,.09) 1px,transparent 1px);background-size:20px 20px}
+.blocks-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;color:#66717e;font-size:10px}
+.block-count{padding:3px 7px;border:1px solid #ccd4dd;border-radius:10px;background:white}
+.block-program{min-height:232px;padding:0 0 44px}
+.empty-blocks{display:flex;min-height:210px;align-items:center;justify-content:center;padding:25px;border:2px dashed #bdc8d4;border-radius:10px;background:rgba(255,255,255,.55);color:#65717f;text-align:center;font-size:12px;line-height:1.5}
+.program-block{position:relative;display:flex;align-items:center;gap:5px;width:max-content;max-width:100%;min-height:38px;margin:0 0 5px;padding:6px 8px 6px 7px;border-radius:6px;color:white;box-shadow:inset 0 -2px rgba(0,0,0,.18),0 2px 3px rgba(45,55,65,.18);font-size:11px;user-select:none}
+.program-block::after{content:"";position:absolute;left:23px;bottom:-5px;width:27px;height:7px;border-radius:0 0 5px 5px;background:inherit;z-index:2}
+.program-block.cursor-block{background:var(--cursor)}
+.program-block.mutator-block{background:var(--mutator)}
+.program-block.draw-block{background:var(--draw)}
+.program-block.query-block{border-radius:18px;background:var(--query)}
+.program-block.query-block::after{display:none}
+.program-block.dragging{opacity:.45}
+.program-block.drag-over{outline:3px solid rgba(50,116,237,.35);outline-offset:2px}
+.program-block.block-error{outline:4px solid #b91c1c;outline-offset:2px;box-shadow:inset 0 -2px rgba(0,0,0,.18),0 0 0 3px #fecaca}
+.drag-handle{width:16px;flex:none;color:rgba(255,255,255,.75);font-size:14px;line-height:1;cursor:grab}
+.block-label{white-space:nowrap}
+.block-input,.block-select{height:24px;min-width:42px;max-width:135px;padding:2px 5px;border:1px solid rgba(0,0,0,.24);border-radius:4px;background:white;color:#1f2937;font:10px Arial,Helvetica,sans-serif;user-select:text}
+.block-input[type=number]{width:55px}
+.block-input.text-input{width:120px}
+.block-select{max-width:92px}
+.block-actions{display:flex;margin-left:4px;gap:2px}
+.block-action{display:flex;width:22px;height:22px;align-items:center;justify-content:center;padding:0;border:0;border-radius:4px;background:rgba(0,0,0,.18);color:white;font-size:10px}
+.block-action:hover{background:rgba(0,0,0,.3)}
+.block-action:disabled{opacity:.35;cursor:default}
 
-#editor{
-  width:100%;
-  height:300px;
-  resize:none;
-  border:0;
-  outline:0;
-  padding:11px 12px;
-  background:#161b22;
-  color:#e7edf4;
-  font:12px/1.55 Consolas,"Courier New",monospace;
-  tab-size:4;
-  white-space:pre;
-  overflow:auto
-}
-
-.workspace-message{
-  padding:7px 9px;
-  border-top:1px solid #343b45;
-  background:#20262e;
-  color:#adb7c2;
-  font-size:10px
-}
-
-/* INFO */
+/* INFORMATION */
 .info-panel{overflow:hidden;border:1px solid #d6dce3;border-radius:11px;background:white}
 .info-title{padding:8px 10px;border-bottom:1px solid #d6dce3;font-size:14px;font-weight:bold}
 .info{padding:8px}
-
-.info-box{
-  margin-bottom:7px;
-  padding:7px;
-  border:1px solid #d6dce3;
-  border-radius:7px
-}
-
+.info-box{margin-bottom:7px;padding:7px;border:1px solid #d6dce3;border-radius:7px}
 .info-label{color:#717b86;font-size:9px}
 .info-value{margin-top:2px;font-size:11px;font-weight:bold}
 .info h3{margin:11px 0 6px;font-size:11px}
-.code-message{padding:7px;border-radius:6px;background:#f5f7f9;font-size:9px;line-height:1.4}
+.info-value.status-live{color:#15803d}
+.info-value.status-updating{color:#a16207}
+.info-value.status-error{color:#b91c1c}
+.color-dot{display:inline-block;width:12px;height:12px;margin-right:4px;vertical-align:-2px;border:1px solid #555;border-radius:50%}
+.transparent-swatch{background:repeating-conic-gradient(#d7dce2 0 25%,#fff 0 50%) 50%/6px 6px!important}
+.mouse-location{font-family:Consolas,"Courier New",monospace}
 
-.color-dot{
-  display:inline-block;
-  width:12px;
-  height:12px;
-  margin-right:4px;
-  vertical-align:-2px;
-  border:1px solid #555;
-  border-radius:50%
+@media(max-width:1279px){
+  .center{grid-template-columns:1fr}
+  .brain{max-width:720px;margin:0 auto}
 }
-
-.mouse-location{
-  font-family:Consolas,"Courier New",monospace
+@media(max-width:980px){
+  .main{grid-template-columns:225px minmax(390px,1fr) 170px}
+  .command{padding-left:9px;font-size:10px}
+  .section-title{padding-left:9px}
 }
-
-@media(max-width:760px){
+@media(max-width:800px){
   .main{grid-template-columns:1fr}
+  .panel{order:2}
+  .center{order:1}
+  .info-panel{order:3}
+  .block-palette{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+  .palette-block{margin:0}
+}
+@media(max-width:520px){
+  .app{padding:6px}
+  .topbar{gap:5px}
+  .project{width:100%}
+  .project input{width:100%}
+  .brain{padding:10px;border-width:3px;border-radius:14px}
+  .brain-port-strip{gap:2px;margin-left:4px;margin-right:4px;padding:2px 3px}
+  .brain-port-strip span{height:12px;font-size:5px}
+  .brain-top{gap:4px;margin:5px 3px 6px;padding-left:5px;padding-right:5px}
+  .brain-name{font-size:7px;letter-spacing:.08em}
+  .screen-layout{grid-template-columns:27px minmax(0,1fr) 27px;padding:4px 1px 5px}
+  .screen-layout::after{right:3px;width:19px;height:30px;font-size:10px}
+  .screen-bezel{padding:4px}
+  .block-palette{grid-template-columns:1fr}
+  .program-block{width:100%;flex-wrap:wrap}
 }
 </style>
 </head>
 
 <body>
-
 <div class="app">
 
-<div class="topbar">
-
-  <div class="project">
-    <label>Project name</label>
-    <input id="projectName" value="My Brain Text">
-  </div>
-
-  <button id="undoBtn" disabled>Undo</button>
-  <button id="redoBtn" disabled>Redo</button>
-  <button id="newBtn">New</button>
-  <button id="saveBtn">Save Project File</button>
-  <button id="openBtn">Open Project File</button>
-  <button id="pngBtn">Download PNG</button>
-
-  <div class="grid-control">
-
-    <button id="gridBtn">Grid: Off</button>
-
-    <div id="gridPopup" class="grid-popup">
-
-      <div class="grid-popup-title">Practice Grid</div>
-
-      <button class="grid-option active" data-grid="">Off</button>
-
-      <div class="grid-subtitle">Text Grids</div>
-
-      <button class="grid-option" data-grid="MONO12">
-        <span class="grid-font">MONO12</span>
-        <span class="grid-size">80 × 20</span>
-      </button>
-
-      <button class="grid-option" data-grid="MONO15">
-        <span class="grid-font">MONO15</span>
-        <span class="grid-size">68 × 16</span>
-      </button>
-
-      <button class="grid-option" data-grid="MONO20">
-        <span class="grid-font">MONO20</span>
-        <span class="grid-size">48 × 12</span>
-      </button>
-
-      <button class="grid-option" data-grid="MONO30">
-        <span class="grid-font">MONO30</span>
-        <span class="grid-size">32 × 8</span>
-      </button>
-
-      <button class="grid-option" data-grid="MONO40">
-        <span class="grid-font">MONO40</span>
-        <span class="grid-size">24 × 6</span>
-      </button>
-
-      <button class="grid-option" data-grid="MONO60">
-        <span class="grid-font">MONO60</span>
-        <span class="grid-size">16 × 4</span>
-      </button>
-
-      <button class="grid-option" data-grid="PROP20">
-        <span class="grid-font">PROP20</span>
-        <span class="grid-size">48 × 12</span>
-      </button>
-
-      <button class="grid-option" data-grid="PROP30">
-        <span class="grid-font">PROP30</span>
-        <span class="grid-size">32 × 8</span>
-      </button>
-
-      <button class="grid-option" data-grid="PROP40">
-        <span class="grid-font">PROP40</span>
-        <span class="grid-size">24 × 6</span>
-      </button>
-
-      <button class="grid-option" data-grid="PROP60">
-        <span class="grid-font">PROP60</span>
-        <span class="grid-size">15 × 4</span>
-      </button>
-
-      <div class="grid-subtitle">Drawing</div>
-
-      <button class="grid-option" data-grid="DRAW30">
-        <span class="grid-font">Drawing Grid</span>
-        <span class="grid-size">30 × 30 px</span>
-      </button>
-
+  <div class="topbar">
+    <div class="project">
+      <label for="projectName">Project name</label>
+      <input id="projectName" value="My Brain Screen">
     </div>
 
-  </div>
-
-  <input id="projectFileInput" class="file-input" type="file" accept=".json,.v5text">
-
-</div>
-
-
-<div class="main">
-
-<!-- LEFT -->
-
-<div class="panel">
-
-  <div class="menu-header">Screen ▾</div>
-
-  <div class="section-title">Cursor Print</div>
-
-  <div class="command-list">
-
-    <button class="command" data-code='brain.screen.print("VEXcode")'>
-      <span class="obj">brain.screen</span>.<span class="method">print</span>(<span class="string">"VEXcode"</span>)
-    </button>
-
-    <button class="command" data-code="brain.screen.set_cursor(1, 1)">
-      <span class="obj">brain.screen</span>.<span class="method">set_cursor</span>(<span class="number">1</span>, <span class="number">1</span>)
-    </button>
-
-    <button class="command" data-code="brain.screen.next_row()">
-      <span class="obj">brain.screen</span>.<span class="method">next_row</span>()
-    </button>
-
-    <button class="command" data-code="brain.screen.clear_row(1)">
-      <span class="obj">brain.screen</span>.<span class="method">clear_row</span>(<span class="number">1</span>)
-    </button>
-
-    <button class="command" data-code="brain.screen.row()">
-      <span class="obj">brain.screen</span>.<span class="method">row</span>()
-    </button>
-
-    <button class="command" data-code="brain.screen.column()">
-      <span class="obj">brain.screen</span>.<span class="method">column</span>()
-    </button>
-
-  </div>
-
-
-  <div class="section-title">Mutators</div>
-
-  <div class="command-list">
-
-    <button class="command" data-code="brain.screen.clear_screen()">
-      <span class="obj">brain.screen</span>.<span class="method">clear_screen</span>()
-    </button>
-
-    <button class="command"
-      data-code="brain.screen.set_font(FontType.MONO20)"
-      data-special="font">
-      <span class="obj">brain.screen</span>.<span class="method">set_font</span>(<span class="enum">FontType.MONO20</span>)
-    </button>
-
-    <button class="command" data-code="brain.screen.set_pen_width(10)">
-      <span class="obj">brain.screen</span>.<span class="method">set_pen_width</span>(<span class="number">10</span>)
-    </button>
-
-    <button class="command"
-      data-code="brain.screen.set_pen_color(Color.RED)"
-      data-special="pen">
-      <span class="obj">brain.screen</span>.<span class="method">set_pen_color</span>(<span class="enum">Color.RED</span>)
-    </button>
-
-    <button class="command"
-      data-code="brain.screen.set_fill_color(Color.RED)"
-      data-special="fill">
-      <span class="obj">brain.screen</span>.<span class="method">set_fill_color</span>(<span class="enum">Color.RED</span>)
-    </button>
-
-  </div>
-
-
-  <div class="section-title">Draw</div>
-
-  <div class="command-list">
-
-    <button class="command" data-code="brain.screen.draw_pixel(0, 0)">
-      <span class="obj">brain.screen</span>.<span class="method">draw_pixel</span>(<span class="number">0</span>, <span class="number">0</span>)
-    </button>
-
-    <button class="command" data-code="brain.screen.draw_line(0, 0, 10, 10)">
-      <span class="obj">brain.screen</span>.<span class="method">draw_line</span>(<span class="number">0</span>, <span class="number">0</span>, <span class="number">10</span>, <span class="number">10</span>)
-    </button>
-
-    <button class="command" data-code="brain.screen.draw_rectangle(0, 0, 10, 10)">
-      <span class="obj">brain.screen</span>.<span class="method">draw_rectangle</span>(<span class="number">0</span>, <span class="number">0</span>, <span class="number">10</span>, <span class="number">10</span>)
-    </button>
-
-    <button class="command" data-code="brain.screen.draw_circle(0, 0, 10)">
-      <span class="obj">brain.screen</span>.<span class="method">draw_circle</span>(<span class="number">0</span>, <span class="number">0</span>, <span class="number">10</span>)
-    </button>
-
-  </div>
-
-  <div id="cheatBox" class="cheat-box">
-    <div id="cheatTitle" class="cheat-head"></div>
-    <div id="cheatBody" class="cheat-body"></div>
-  </div>
-
-</div>
-
-
-<!-- CENTER -->
-
-<div class="center">
-
-  <div class="brain">
-
-    <div class="brain-top">
-      <span class="v5">V5</span>
-      <span>VEX ROBOT BRAIN</span>
-      <span id="brainState" class="brain-state">LIVE</span>
+    <div class="mode-control" role="tablist" aria-label="Programming mode">
+      <button id="pythonModeBtn" class="mode-button active" role="tab" aria-selected="true">Python</button>
+      <button id="blocksModeBtn" class="mode-button" role="tab" aria-selected="false">Blocks</button>
     </div>
 
-    <div class="screen-layout">
+    <button id="undoBtn" disabled>Undo</button>
+    <button id="redoBtn" disabled>Redo</button>
+    <button id="newBtn">New</button>
+    <button id="saveBtn">Save Project File</button>
+    <button id="openBtn">Open Project File</button>
+    <button id="snapshotBtn">Download Project Snapshot</button>
 
-      <div></div>
-      <div id="xAxis" class="x-axis"></div>
-      <div id="yAxis" class="y-axis"></div>
-
-      <div class="screen-bezel">
-        <canvas id="brainScreen" width="480" height="240"></canvas>
-      </div>
-
-    </div>
-
-  </div>
-
-
-  <div class="workspace">
-
-    <div class="workspace-title">
-      <span>Coding Workspace</span>
-      <button id="exampleBtn" class="example-btn">Load Example</button>
-    </div>
-
-    <div class="filename-bar">
-      <span>main.py</span>
-      <span id="editorStatus">Live</span>
-    </div>
-
-    <div class="editor-shell">
-      <pre id="lineNumbers"></pre>
-      <textarea id="editor" spellcheck="false"></textarea>
-    </div>
-
-    <div id="workspaceMessage" class="workspace-message">
-      The Brain screen updates automatically as you code.
-    </div>
-
-  </div>
-
-</div>
-
-
-<!-- RIGHT INFORMATION -->
-
-<div class="info-panel">
-
-  <div class="info-title">Screen Information</div>
-
-  <div class="info">
-
-    <div class="info-box">
-      <div class="info-label">Status</div>
-      <div id="runStatus" class="info-value">Live</div>
-    </div>
-
-    <div class="info-box">
-      <div class="info-label">Practice Grid</div>
-      <div id="gridInfo" class="info-value">Off</div>
-    </div>
-
-    <div class="info-box">
-      <div class="info-label">Font</div>
-      <div id="fontInfo" class="info-value">MONO20</div>
-    </div>
-
-    <div class="info-box">
-      <div class="info-label">Cursor</div>
-      <div id="cursorInfo" class="info-value">Row 1, Col 1</div>
-    </div>
-
-    <div class="info-box">
-      <div class="info-label">Mouse Location</div>
-      <div class="info-value mouse-location">
-        X: <span id="mouseX">—</span>
-        &nbsp;&nbsp;
-        Y: <span id="mouseY">—</span>
+    <div class="grid-control">
+      <button id="gridBtn" aria-expanded="false">Grid: Off</button>
+      <div id="gridPopup" class="grid-popup">
+        <div class="grid-popup-title">Practice Grid</div>
+        <button class="grid-option active" data-grid="">Off</button>
+        <div class="grid-subtitle">Text Grids</div>
+        <button class="grid-option" data-grid="MONO12"><span class="grid-font">MONO12</span><span class="grid-size">80 × 20</span></button>
+        <button class="grid-option" data-grid="MONO15"><span class="grid-font">MONO15</span><span class="grid-size">68 × 16</span></button>
+        <button class="grid-option" data-grid="MONO20"><span class="grid-font">MONO20</span><span class="grid-size">48 × 12</span></button>
+        <button class="grid-option" data-grid="MONO30"><span class="grid-font">MONO30</span><span class="grid-size">32 × 8</span></button>
+        <button class="grid-option" data-grid="MONO40"><span class="grid-font">MONO40</span><span class="grid-size">24 × 6</span></button>
+        <button class="grid-option" data-grid="MONO60"><span class="grid-font">MONO60</span><span class="grid-size">16 × 4</span></button>
+        <button class="grid-option" data-grid="PROP20"><span class="grid-font">PROP20</span><span class="grid-size">48 × 12</span></button>
+        <button class="grid-option" data-grid="PROP30"><span class="grid-font">PROP30</span><span class="grid-size">32 × 8</span></button>
+        <button class="grid-option" data-grid="PROP40"><span class="grid-font">PROP40</span><span class="grid-size">24 × 6</span></button>
+        <button class="grid-option" data-grid="PROP60"><span class="grid-font">PROP60</span><span class="grid-size">15 × 4</span></button>
+        <div class="grid-subtitle">Drawing</div>
+        <button class="grid-option" data-grid="DRAW30"><span class="grid-font">Drawing Grid</span><span class="grid-size">30 × 30 px</span></button>
       </div>
     </div>
 
-    <div class="info-box">
-      <div class="info-label">Pen</div>
-      <div class="info-value">
-        <span id="colorDot" class="color-dot"></span>
-        <span id="colorInfo">WHITE</span>
+    <input id="projectFileInput" class="file-input" type="file" accept=".json,.v5screen,.v5text">
+  </div>
+
+  <div class="main">
+
+    <aside class="panel">
+      <div id="menuHeader" class="menu-header">Screen ▾</div>
+
+      <div id="pythonToolbox" class="mode-view">
+        <div class="section-title">Cursor Print</div>
+        <div class="command-list">
+          <button class="command" data-code='brain.screen.print("VEXcode")'><span class="obj">brain.screen</span>.<span class="method">print</span>(<span class="string">"VEXcode"</span>)</button>
+          <button class="command" data-code="brain.screen.set_cursor(1, 1)"><span class="obj">brain.screen</span>.<span class="method">set_cursor</span>(<span class="number">1</span>, <span class="number">1</span>)</button>
+          <button class="command" data-code="brain.screen.next_row()"><span class="obj">brain.screen</span>.<span class="method">next_row</span>()</button>
+          <button class="command" data-code="brain.screen.clear_row()"><span class="obj">brain.screen</span>.<span class="method">clear_row</span>()</button>
+          <button class="command" data-code="brain.screen.row()"><span class="obj">brain.screen</span>.<span class="method">row</span>()</button>
+          <button class="command" data-code="brain.screen.column()"><span class="obj">brain.screen</span>.<span class="method">column</span>()</button>
+        </div>
+
+        <div class="section-title">Mutators</div>
+        <div class="command-list">
+          <button class="command" data-code="brain.screen.clear_screen()"><span class="obj">brain.screen</span>.<span class="method">clear_screen</span>()</button>
+          <button class="command" data-code="brain.screen.set_font(FontType.MONO20)" data-special="font"><span class="obj">brain.screen</span>.<span class="method">set_font</span>(<span class="enum">FontType.MONO20</span>)</button>
+          <button class="command" data-code="brain.screen.set_pen_width(10)"><span class="obj">brain.screen</span>.<span class="method">set_pen_width</span>(<span class="number">10</span>)</button>
+          <button class="command" data-code="brain.screen.set_pen_color(Color.RED)" data-special="pen"><span class="obj">brain.screen</span>.<span class="method">set_pen_color</span>(<span class="enum">Color.RED</span>)</button>
+          <button class="command" data-code="brain.screen.set_fill_color(Color.RED)" data-special="fill"><span class="obj">brain.screen</span>.<span class="method">set_fill_color</span>(<span class="enum">Color.RED</span>)</button>
+        </div>
+
+        <div class="section-title">Draw</div>
+        <div class="command-list">
+          <button class="command" data-code="brain.screen.draw_pixel(0, 0)"><span class="obj">brain.screen</span>.<span class="method">draw_pixel</span>(<span class="number">0</span>, <span class="number">0</span>)</button>
+          <button class="command" data-code="brain.screen.draw_line(0, 0, 10, 10)"><span class="obj">brain.screen</span>.<span class="method">draw_line</span>(<span class="number">0</span>, <span class="number">0</span>, <span class="number">10</span>, <span class="number">10</span>)</button>
+          <button class="command" data-code="brain.screen.draw_rectangle(0, 0, 10, 10)"><span class="obj">brain.screen</span>.<span class="method">draw_rectangle</span>(<span class="number">0</span>, <span class="number">0</span>, <span class="number">10</span>, <span class="number">10</span>)</button>
+          <button class="command" data-code="brain.screen.draw_circle(0, 0, 10)"><span class="obj">brain.screen</span>.<span class="method">draw_circle</span>(<span class="number">0</span>, <span class="number">0</span>, <span class="number">10</span>)</button>
+        </div>
+      </div>
+
+      <div id="blocksToolbox" class="mode-view" hidden>
+        <div class="toolbox-note">Click a block to add it. Then change its values in the workspace.</div>
+
+        <div class="section-title">Cursor Print</div>
+        <div class="block-palette">
+          <button class="palette-block cursor-block" data-block="print">print <span class="palette-swatch">text</span></button>
+          <button class="palette-block cursor-block" data-block="setCursor">set cursor row <span class="palette-swatch">1</span> column <span class="palette-swatch">1</span></button>
+          <button class="palette-block cursor-block" data-block="nextRow">next row</button>
+          <button class="palette-block cursor-block" data-block="clearRow">clear row <span class="palette-swatch">current</span></button>
+          <button class="palette-block query-block" data-block="rowQuery">cursor row</button>
+          <button class="palette-block query-block" data-block="columnQuery">cursor column</button>
+        </div>
+
+        <div class="section-title">Mutators</div>
+        <div class="block-palette">
+          <button class="palette-block mutator-block" data-block="clearScreen">clear screen</button>
+          <button class="palette-block mutator-block" data-block="setFont">set font <span class="palette-swatch">MONO20</span></button>
+          <button class="palette-block mutator-block" data-block="setPenWidth">set pen width <span class="palette-swatch">10</span></button>
+          <button class="palette-block mutator-block" data-block="setPenColor">set pen color <span class="palette-swatch">RED</span></button>
+          <button class="palette-block mutator-block" data-block="setFillColor">set fill color <span class="palette-swatch">RED</span></button>
+        </div>
+
+        <div class="section-title">Draw</div>
+        <div class="block-palette">
+          <button class="palette-block draw-block" data-block="drawPixel">draw pixel x <span class="palette-swatch">0</span> y <span class="palette-swatch">0</span></button>
+          <button class="palette-block draw-block" data-block="drawLine">draw line x1 y1 x2 y2</button>
+          <button class="palette-block draw-block" data-block="drawRectangle">draw rectangle x y width height</button>
+          <button class="palette-block draw-block" data-block="drawCircle">draw circle center x y radius</button>
+        </div>
+      </div>
+
+      <div id="cheatBox" class="cheat-box">
+        <div class="cheat-head"><span id="cheatTitle"></span><button id="cheatClose" class="cheat-close" aria-label="Close options">×</button></div>
+        <div id="cheatBody" class="cheat-body"></div>
+      </div>
+    </aside>
+
+    <div class="center">
+      <div class="workspace">
+        <div class="workspace-title">
+          <span>Coding Workspace</span>
+          <div class="workspace-title-actions">
+            <span id="workspaceModeBadge" class="mode-badge">Python</span>
+            <button id="clearBlocksBtn" class="clear-blocks-btn" hidden>Clear Blocks</button>
+            <select id="exampleSelect" class="example-select" aria-label="Load an example program">
+              <option value="">Examples…</option>
+              <option value="text">Text &amp; Cursor</option>
+              <option value="colors">Fonts &amp; Colors</option>
+              <option value="shapes">Shapes &amp; Drawing</option>
+              <option value="pixel">Pixel Art</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="pythonWorkspace" class="mode-view">
+          <div class="filename-bar"><span>main.py</span><span id="pythonStatus">Live</span></div>
+          <div class="editor-shell">
+            <pre id="lineNumbers"></pre>
+            <textarea id="editor" spellcheck="false" aria-label="Python code editor"></textarea>
+          </div>
+        </div>
+
+        <div id="blocksWorkspace" class="mode-view" hidden>
+          <div class="filename-bar"><span>main.blocks</span><span id="blocksStatus">Live</span></div>
+          <div class="blocks-shell">
+            <div class="blocks-toolbar">
+              <span>Drag blocks or use ▲ and ▼ to reorder.</span>
+              <span id="blockCount" class="block-count">0 blocks</span>
+            </div>
+            <div id="blockProgram" class="block-program" aria-label="Blocks program"></div>
+          </div>
+        </div>
+
+        <section id="codeCheck" class="code-check" role="alert" aria-live="assertive" hidden>
+          <span class="code-check-icon" aria-hidden="true">⚠</span>
+          <div class="code-check-content">
+            <div class="code-check-title">Code Check</div>
+            <ol id="codeMessage" class="code-message"></ol>
+          </div>
+        </section>
+
+        <div id="workspaceMessage" class="workspace-message">The Brain screen updates automatically as you code.</div>
+      </div>
+
+      <div class="brain">
+        <div class="brain-port-strip port-strip-top" aria-hidden="true">
+          <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+          <span>6</span><span>7</span><span>8</span><span>9</span><span>10</span>
+        </div>
+
+        <div class="brain-top">
+          <span class="v5"><span class="vex-mark">VEX</span><span class="v5-mark">V5</span></span>
+          <span class="brain-name">ROBOT BRAIN</span>
+          <span id="brainState" class="brain-state">LIVE</span>
+        </div>
+
+        <div class="screen-layout">
+          <div class="axis-corner" aria-hidden="true"></div>
+          <div id="xAxis" class="x-axis"></div>
+          <div id="yAxis" class="y-axis"></div>
+          <div class="screen-bezel"><canvas id="brainScreen" width="480" height="240"></canvas></div>
+        </div>
+
+        <div class="brain-port-strip port-strip-bottom" aria-hidden="true">
+          <span>11</span><span>12</span><span>13</span><span>14</span><span>15</span>
+          <span>16</span><span>17</span><span>18</span><span>19</span><span>20</span>
+        </div>
       </div>
     </div>
 
-    <div class="info-box">
-      <div class="info-label">Fill</div>
-      <div id="fillInfo" class="info-value">BLACK</div>
-    </div>
-
-    <div class="info-box">
-      <div class="info-label">Pen Width</div>
-      <div id="penWidthInfo" class="info-value">1</div>
-    </div>
-
-    <h3>Code Messages</h3>
-
-    <div id="codeMessage" class="code-message">
-      ✓ Code is ready.
-    </div>
+    <aside class="info-panel">
+      <div class="info-title">Screen Information</div>
+      <div class="info">
+        <div class="info-box"><div class="info-label">Mode</div><div id="modeInfo" class="info-value">Python</div></div>
+        <div class="info-box"><div class="info-label">Status</div><div id="runStatus" class="info-value status-live">Live</div></div>
+        <div class="info-box"><div class="info-label">Browser Save</div><div id="autosaveInfo" class="info-value">Ready</div></div>
+        <div class="info-box"><div class="info-label">Practice Grid</div><div id="gridInfo" class="info-value">Off</div></div>
+        <div class="info-box"><div class="info-label">Font</div><div id="fontInfo" class="info-value">MONO20</div></div>
+        <div class="info-box"><div class="info-label">Cursor</div><div id="cursorInfo" class="info-value">Row 1, Col 1</div></div>
+        <div class="info-box">
+          <div class="info-label">Mouse Location</div>
+          <div class="info-value mouse-location">X: <span id="mouseX">—</span>&nbsp;&nbsp;Y: <span id="mouseY">—</span></div>
+        </div>
+        <div class="info-box">
+          <div class="info-label">Pen</div>
+          <div class="info-value"><span id="colorDot" class="color-dot"></span><span id="colorInfo">WHITE</span></div>
+        </div>
+        <div class="info-box"><div class="info-label">Fill</div><div id="fillInfo" class="info-value">BLACK</div></div>
+        <div class="info-box"><div class="info-label">Pen Width</div><div id="penWidthInfo" class="info-value">1</div></div>
+      </div>
+    </aside>
 
   </div>
-
 </div>
-
-</div>
-</div>
-
 
 <script>
+"use strict";
 
-const canvas=document.getElementById("brainScreen");
+const byId=id=>document.getElementById(id);
+const canvas=byId("brainScreen");
 const ctx=canvas.getContext("2d");
-
 const buffer=document.createElement("canvas");
 buffer.width=480;
 buffer.height=240;
-
 const bctx=buffer.getContext("2d");
 
-const editor=document.getElementById("editor");
-const lineNumbers=document.getElementById("lineNumbers");
-const projectName=document.getElementById("projectName");
-const fileInput=document.getElementById("projectFileInput");
+const editor=byId("editor");
+const lineNumbers=byId("lineNumbers");
+const projectName=byId("projectName");
+const fileInput=byId("projectFileInput");
+const blockProgramElement=byId("blockProgram");
 
 const fonts={
   MONO12:{size:12,cols:80,rows:20,prop:false},
@@ -596,7 +460,6 @@ const fonts={
   MONO30:{size:30,cols:32,rows:8,prop:false},
   MONO40:{size:40,cols:24,rows:6,prop:false},
   MONO60:{size:60,cols:16,rows:4,prop:false},
-
   PROP20:{size:20,cols:48,rows:12,prop:true},
   PROP30:{size:30,cols:32,rows:8,prop:true},
   PROP40:{size:40,cols:24,rows:6,prop:true},
@@ -612,21 +475,75 @@ const colors={
   PURPLE:"#9800b5",
   CYAN:"#22d3ee",
   WHITE:"#ffffff",
-  BLACK:"#000000"
+  BLACK:"#000000",
+  TRANSPARENT:"rgba(0,0,0,0)"
 };
 
-const colorNames=[
-  "RED","ORANGE","YELLOW","GREEN",
-  "BLUE","PURPLE","CYAN","WHITE","BLACK"
-];
+const colorNames=Object.keys(colors);
+const rowChoices=["CURRENT",...Array.from({length:20},(_,index)=>String(index+1))];
+
+function setColorPreview(element,name){
+  const transparent=name==="TRANSPARENT";
+  element.classList.toggle("transparent-swatch",transparent);
+  element.style.background=transparent?"":colors[name];
+}
+
+const blockDefaults={
+  print:{text:"VEXcode"},
+  setCursor:{row:1,col:1},
+  nextRow:{},
+  clearRow:{row:"CURRENT"},
+  rowQuery:{},
+  columnQuery:{},
+  clearScreen:{},
+  setFont:{font:"MONO20"},
+  setPenWidth:{width:10},
+  setPenColor:{color:"RED"},
+  setFillColor:{color:"RED"},
+  drawPixel:{x:0,y:0},
+  drawLine:{x1:0,y1:0,x2:100,y2:100},
+  drawRectangle:{x:0,y:0,width:100,height:60},
+  drawCircle:{x:120,y:100,radius:40}
+};
+
+const blockCategories={
+  print:"cursor-block",
+  setCursor:"cursor-block",
+  nextRow:"cursor-block",
+  clearRow:"cursor-block",
+  rowQuery:"query-block",
+  columnQuery:"query-block",
+  clearScreen:"mutator-block",
+  setFont:"mutator-block",
+  setPenWidth:"mutator-block",
+  setPenColor:"mutator-block",
+  setFillColor:"mutator-block",
+  drawPixel:"draw-block",
+  drawLine:"draw-block",
+  drawRectangle:"draw-block",
+  drawCircle:"draw-block"
+};
 
 let state=defaultState();
+let activeMode="python";
 let practiceGrid="";
-let undoStack=[];
-let redoStack=[];
-let previousEditorValue="";
 let liveTimer=null;
+let nextBlockId=1;
+let blockProgram=[];
 
+let pythonUndoStack=[];
+let pythonRedoStack=[];
+let previousEditorValue="";
+let blockUndoStack=[];
+let blockRedoStack=[];
+let draggedBlockId=null;
+let dragStartSnapshot="";
+let autosaveTimer=null;
+let autosaveReady=false;
+let pythonErrorLines=[];
+let blockErrorIndexes=[];
+
+const autosaveKey="vex-v5-screen-simulator.autosave.v1";
 
 function defaultState(){
   return{
@@ -639,24 +556,24 @@ function defaultState(){
   };
 }
 
-
 function starterCode(){
-
-return `from vex import *
+  return `from vex import *
 
 brain = Brain()
 `;
-
 }
 
-
-function exampleCode(){
-
-return `from vex import *
+function exampleCode(name){
+  const examples={
+    text:`from vex import *
 
 brain = Brain()
 
 brain.screen.set_font(FontType.MONO30)
+brain.screen.set_cursor(1, 1)
+brain.screen.print("THIS ROW CLEARS")
+brain.screen.clear_row()
+
 brain.screen.set_cursor(2, 4)
 brain.screen.set_pen_color(Color.RED)
 brain.screen.print("VEX V5")
@@ -664,1335 +581,1532 @@ brain.screen.print("VEX V5")
 brain.screen.next_row()
 brain.screen.set_pen_color(Color.CYAN)
 brain.screen.print("SCREEN")
-`;
+`,
+    colors:`from vex import *
 
+brain = Brain()
+
+brain.screen.set_font(FontType.MONO20)
+brain.screen.set_cursor(2, 3)
+brain.screen.set_pen_color(Color.YELLOW)
+brain.screen.print("MONO20")
+
+brain.screen.set_font(FontType.PROP30)
+brain.screen.set_cursor(4, 3)
+brain.screen.set_pen_color(Color.PURPLE)
+brain.screen.print("PROP30")
+
+brain.screen.set_fill_color(Color.TRANSPARENT)
+brain.screen.set_pen_color(Color.CYAN)
+brain.screen.set_pen_width(4)
+brain.screen.draw_rectangle(25, 155, 220, 60)
+`,
+    shapes:`from vex import *
+
+brain = Brain()
+
+brain.screen.set_pen_width(4)
+brain.screen.set_pen_color(Color.CYAN)
+brain.screen.set_fill_color(Color.TRANSPARENT)
+brain.screen.draw_rectangle(25, 25, 190, 95)
+
+brain.screen.set_pen_color(Color.WHITE)
+brain.screen.draw_line(35, 135, 210, 215)
+
+brain.screen.set_pen_color(Color.YELLOW)
+brain.screen.set_fill_color(Color.BLUE)
+brain.screen.draw_circle(350, 120, 70)
+`,
+    pixel:`from vex import *
+
+brain = Brain()
+
+brain.screen.set_pen_width(1)
+brain.screen.set_pen_color(Color.GREEN)
+brain.screen.set_fill_color(Color.GREEN)
+brain.screen.draw_rectangle(150, 30, 180, 30)
+brain.screen.draw_rectangle(120, 60, 240, 90)
+brain.screen.draw_rectangle(150, 150, 30, 60)
+brain.screen.draw_rectangle(300, 150, 30, 60)
+
+brain.screen.set_pen_color(Color.BLACK)
+brain.screen.set_fill_color(Color.BLACK)
+brain.screen.draw_rectangle(180, 75, 30, 30)
+brain.screen.draw_rectangle(270, 75, 30, 30)
+`
+  };
+  return examples[name] || examples.text;
 }
 
+function makeBlock(type,args={}){
+  if(!blockDefaults[type])return null;
+  return{
+    id:"block-"+(nextBlockId++),
+    type,
+    args:{...blockDefaults[type],...args}
+  };
+}
+
+function exampleBlocks(name){
+  const examples={
+    text:()=>[
+      makeBlock("setFont",{font:"MONO30"}),
+      makeBlock("setCursor",{row:1,col:1}),
+      makeBlock("print",{text:"THIS ROW CLEARS"}),
+      makeBlock("clearRow",{row:"CURRENT"}),
+      makeBlock("setCursor",{row:2,col:4}),
+      makeBlock("setPenColor",{color:"RED"}),
+      makeBlock("print",{text:"VEX V5"}),
+      makeBlock("nextRow"),
+      makeBlock("setPenColor",{color:"CYAN"}),
+      makeBlock("print",{text:"SCREEN"})
+    ],
+    colors:()=>[
+      makeBlock("setFont",{font:"MONO20"}),
+      makeBlock("setCursor",{row:2,col:3}),
+      makeBlock("setPenColor",{color:"YELLOW"}),
+      makeBlock("print",{text:"MONO20"}),
+      makeBlock("setFont",{font:"PROP30"}),
+      makeBlock("setCursor",{row:4,col:3}),
+      makeBlock("setPenColor",{color:"PURPLE"}),
+      makeBlock("print",{text:"PROP30"}),
+      makeBlock("setFillColor",{color:"TRANSPARENT"}),
+      makeBlock("setPenColor",{color:"CYAN"}),
+      makeBlock("setPenWidth",{width:4}),
+      makeBlock("drawRectangle",{x:25,y:155,width:220,height:60})
+    ],
+    shapes:()=>[
+      makeBlock("setPenWidth",{width:4}),
+      makeBlock("setPenColor",{color:"CYAN"}),
+      makeBlock("setFillColor",{color:"TRANSPARENT"}),
+      makeBlock("drawRectangle",{x:25,y:25,width:190,height:95}),
+      makeBlock("setPenColor",{color:"WHITE"}),
+      makeBlock("drawLine",{x1:35,y1:135,x2:210,y2:215}),
+      makeBlock("setPenColor",{color:"YELLOW"}),
+      makeBlock("setFillColor",{color:"BLUE"}),
+      makeBlock("drawCircle",{x:350,y:120,radius:70})
+    ],
+    pixel:()=>[
+      makeBlock("setPenWidth",{width:1}),
+      makeBlock("setPenColor",{color:"GREEN"}),
+      makeBlock("setFillColor",{color:"GREEN"}),
+      makeBlock("drawRectangle",{x:150,y:30,width:180,height:30}),
+      makeBlock("drawRectangle",{x:120,y:60,width:240,height:90}),
+      makeBlock("drawRectangle",{x:150,y:150,width:30,height:60}),
+      makeBlock("drawRectangle",{x:300,y:150,width:30,height:60}),
+      makeBlock("setPenColor",{color:"BLACK"}),
+      makeBlock("setFillColor",{color:"BLACK"}),
+      makeBlock("drawRectangle",{x:180,y:75,width:30,height:30}),
+      makeBlock("drawRectangle",{x:270,y:75,width:30,height:30})
+    ]
+  };
+  return (examples[name] || examples.text)().filter(Boolean);
+}
+
+function cloneBlocks(blocks=blockProgram){
+  return JSON.parse(JSON.stringify(blocks));
+}
+
+function blocksSnapshot(){
+  return JSON.stringify(blockProgram);
+}
+
+function restoreBlocksSnapshot(snapshot){
+  try{
+    blockProgram=JSON.parse(snapshot);
+  }
+  catch{
+    blockProgram=[];
+  }
+  renderBlockProgram();
+}
+
+function normalizeLoadedBlocks(blocks){
+  if(!Array.isArray(blocks))return [];
+  return blocks.flatMap(item=>{
+    if(!item || !blockDefaults[item.type])return [];
+    const block=makeBlock(item.type,item.args && typeof item.args==="object"?item.args:{});
+    if(item.id && typeof item.id==="string"){
+      block.id=item.id;
+      const idNumber=Number(item.id.match(/^block-(\d+)$/)?.[1]);
+      if(Number.isFinite(idNumber))nextBlockId=Math.max(nextBlockId,idNumber+1);
+    }
+    return [block];
+  });
+}
+
+/* PROJECT DATA + BROWSER AUTOSAVE */
+
+function projectData(){
+  return{
+    version:12,
+    name:projectName.value,
+    activeMode,
+    pythonCode:editor.value,
+    code:editor.value,
+    blocks:cloneBlocks(),
+    practiceGrid
+  };
+}
+
+function applyProjectData(data={}){
+  projectName.value=typeof data.name==="string"?data.name:"My Brain Screen";
+  editor.value=typeof data.pythonCode==="string"
+    ?data.pythonCode
+    :typeof data.code==="string"
+      ?data.code
+      :starterCode();
+  previousEditorValue=editor.value;
+  blockProgram=normalizeLoadedBlocks(data.blocks);
+  practiceGrid=typeof data.practiceGrid==="string"?data.practiceGrid:"";
+  if(practiceGrid!=="DRAW30" && !fonts[practiceGrid])practiceGrid="";
+  pythonUndoStack=[];
+  pythonRedoStack=[];
+  blockUndoStack=[];
+  blockRedoStack=[];
+  updateLineNumbers();
+  renderBlockProgram();
+  updateGridSelection();
+  switchMode(data.activeMode==="blocks"?"blocks":"python",{run:false});
+  updateHistoryButtons();
+  byId("exampleSelect").value="";
+}
+
+function scheduleAutosave(){
+  if(!autosaveReady)return;
+  clearTimeout(autosaveTimer);
+  autosaveTimer=setTimeout(saveAutosave,450);
+}
+
+function saveAutosave(){
+  if(!autosaveReady)return;
+  clearTimeout(autosaveTimer);
+  try{
+    localStorage.setItem(autosaveKey,JSON.stringify(projectData()));
+    byId("autosaveInfo").textContent="Saved in this browser";
+  }
+  catch{
+    byId("autosaveInfo").textContent="Unavailable";
+  }
+}
+
+function restoreAutosave(){
+  try{
+    const saved=localStorage.getItem(autosaveKey);
+    if(!saved)return false;
+    const data=JSON.parse(saved);
+    if(!data || typeof data!=="object")return false;
+    applyProjectData(data);
+    return true;
+  }
+  catch{
+    return false;
+  }
+}
+
+/* MODE */
+
+function switchMode(mode,{run=true}={}){
+  if(mode!=="python" && mode!=="blocks")return;
+  activeMode=mode;
+  const isPython=mode==="python";
+
+  byId("pythonModeBtn").classList.toggle("active",isPython);
+  byId("blocksModeBtn").classList.toggle("active",!isPython);
+  byId("pythonModeBtn").setAttribute("aria-selected",String(isPython));
+  byId("blocksModeBtn").setAttribute("aria-selected",String(!isPython));
+
+  byId("pythonToolbox").hidden=!isPython;
+  byId("blocksToolbox").hidden=isPython;
+  byId("pythonWorkspace").hidden=!isPython;
+  byId("blocksWorkspace").hidden=isPython;
+  byId("clearBlocksBtn").hidden=isPython;
+  byId("workspaceModeBadge").textContent=isPython?"Python":"Blocks";
+  byId("modeInfo").textContent=isPython?"Python":"Blocks";
+  byId("menuHeader").textContent=isPython?"Screen ▾":"Screen Blocks ▾";
+  byId("cheatBox").style.display="none";
+
+  updateHistoryButtons();
+  if(run)runImmediately();
+}
+
+byId("pythonModeBtn").addEventListener("click",()=>switchMode("python"));
+byId("blocksModeBtn").addEventListener("click",()=>switchMode("blocks"));
 
 /* LIVE UPDATE */
 
 function scheduleLiveRun(){
-
   clearTimeout(liveTimer);
-
-  document.getElementById("editorStatus").textContent="Updating...";
-  document.getElementById("brainState").textContent="UPDATING";
-
-  liveTimer=setTimeout(runCode,400);
-
+  setUpdatingStatus();
+  liveTimer=setTimeout(runActiveProgram,300);
 }
-
 
 function runImmediately(){
-
   clearTimeout(liveTimer);
-  runCode();
-
+  runActiveProgram();
 }
 
+function setUpdatingStatus(){
+  byId("brainState").textContent="UPDATING";
+  setCompactStatus("Updating","updating");
+  hideCodeCheck();
+  clearErrorHighlights();
+  if(activeMode==="python")byId("pythonStatus").textContent="Updating...";
+  else byId("blocksStatus").textContent="Updating...";
+}
 
 /* MOUSE LOCATION */
 
 canvas.addEventListener("mousemove",event=>{
-
   const rect=canvas.getBoundingClientRect();
-
-  let x=Math.floor(
-    (event.clientX-rect.left)*
-    480/
-    rect.width
-  );
-
-  let y=Math.floor(
-    (event.clientY-rect.top)*
-    240/
-    rect.height
-  );
-
+  let x=Math.floor((event.clientX-rect.left)*480/rect.width);
+  let y=Math.floor((event.clientY-rect.top)*240/rect.height);
   x=Math.max(0,Math.min(479,x));
   y=Math.max(0,Math.min(239,y));
-
-  document.getElementById("mouseX").textContent=x;
-  document.getElementById("mouseY").textContent=y;
-
+  byId("mouseX").textContent=x;
+  byId("mouseY").textContent=y;
 });
-
 
 canvas.addEventListener("mouseleave",()=>{
-
-  document.getElementById("mouseX").textContent="—";
-  document.getElementById("mouseY").textContent="—";
-
+  byId("mouseX").textContent="—";
+  byId("mouseY").textContent="—";
 });
-
 
 /* GRID */
 
-const gridBtn=document.getElementById("gridBtn");
-const gridPopup=document.getElementById("gridPopup");
+const gridBtn=byId("gridBtn");
+const gridPopup=byId("gridPopup");
 
 gridBtn.addEventListener("click",event=>{
-
   event.stopPropagation();
-
-  gridPopup.style.display=
-    gridPopup.style.display==="block"
-      ?"none"
-      :"block";
-
+  const opening=gridPopup.style.display!=="block";
+  gridPopup.style.display=opening?"block":"none";
+  gridBtn.setAttribute("aria-expanded",String(opening));
 });
-
 
 document.querySelectorAll(".grid-option").forEach(button=>{
-
   button.addEventListener("click",()=>{
-
     practiceGrid=button.dataset.grid;
-
-    document.querySelectorAll(".grid-option").forEach(item=>{
-      item.classList.remove("active");
-    });
-
-    button.classList.add("active");
-
-    if(practiceGrid==="DRAW30"){
-      gridBtn.textContent="Grid: Drawing";
-    }
-    else if(practiceGrid){
-      gridBtn.textContent="Grid: "+practiceGrid;
-    }
-    else{
-      gridBtn.textContent="Grid: Off";
-    }
-
+    updateGridSelection();
     gridPopup.style.display="none";
-
+    gridBtn.setAttribute("aria-expanded","false");
     updateInfo();
     drawVisibleScreen();
-
+    scheduleAutosave();
   });
-
 });
 
+function updateGridSelection(){
+  document.querySelectorAll(".grid-option").forEach(button=>{
+    button.classList.toggle("active",button.dataset.grid===practiceGrid);
+  });
+  gridBtn.textContent=practiceGrid==="DRAW30"?"Grid: Drawing":practiceGrid?"Grid: "+practiceGrid:"Grid: Off";
+}
 
 document.addEventListener("click",event=>{
-
-  if(
-    !gridPopup.contains(event.target) &&
-    event.target!==gridBtn
-  ){
+  if(!gridPopup.contains(event.target) && event.target!==gridBtn){
     gridPopup.style.display="none";
+    gridBtn.setAttribute("aria-expanded","false");
   }
-
 });
-
 
 /* LINE NUMBERS */
 
 function updateLineNumbers(){
-
   const count=editor.value.split("\n").length;
-
-  lineNumbers.textContent=
-    Array.from({length:count},(_,i)=>i+1).join("\n");
-
+  const fragment=document.createDocumentFragment();
+  for(let index=1;index<=count;index++){
+    const line=document.createElement("span");
+    line.className="line-number"+(pythonErrorLines.includes(index)?" has-error":"");
+    line.textContent=index;
+    fragment.appendChild(line);
+  }
+  lineNumbers.replaceChildren(fragment);
   lineNumbers.scrollTop=editor.scrollTop;
-
 }
 
-
-editor.addEventListener("scroll",()=>{
-  lineNumbers.scrollTop=editor.scrollTop;
-});
-
+editor.addEventListener("scroll",()=>{lineNumbers.scrollTop=editor.scrollTop;});
+projectName.addEventListener("input",scheduleAutosave);
 
 /* HISTORY */
 
 function updateHistoryButtons(){
-
-  document.getElementById("undoBtn").disabled=
-    undoStack.length===0;
-
-  document.getElementById("redoBtn").disabled=
-    redoStack.length===0;
-
+  const undo=activeMode==="python"?pythonUndoStack:blockUndoStack;
+  const redo=activeMode==="python"?pythonRedoStack:blockRedoStack;
+  byId("undoBtn").disabled=undo.length===0;
+  byId("redoBtn").disabled=redo.length===0;
 }
 
-
-function recordChange(oldValue){
-
+function recordPythonChange(oldValue){
   if(oldValue===editor.value)return;
-
-  undoStack.push(oldValue);
-
-  if(undoStack.length>100){
-    undoStack.shift();
-  }
-
-  redoStack=[];
+  pythonUndoStack.push(oldValue);
+  if(pythonUndoStack.length>100)pythonUndoStack.shift();
+  pythonRedoStack=[];
   updateHistoryButtons();
-
 }
 
-
-document.getElementById("undoBtn").addEventListener("click",()=>{
-
-  if(!undoStack.length)return;
-
-  redoStack.push(editor.value);
-
-  editor.value=undoStack.pop();
-  previousEditorValue=editor.value;
-
-  updateLineNumbers();
+function recordBlockChange(oldSnapshot){
+  const current=blocksSnapshot();
+  if(oldSnapshot===current)return;
+  blockUndoStack.push(oldSnapshot);
+  if(blockUndoStack.length>100)blockUndoStack.shift();
+  blockRedoStack=[];
   updateHistoryButtons();
+}
 
+byId("undoBtn").addEventListener("click",()=>{
+  if(activeMode==="python"){
+    if(!pythonUndoStack.length)return;
+    pythonRedoStack.push(editor.value);
+    editor.value=pythonUndoStack.pop();
+    previousEditorValue=editor.value;
+    updateLineNumbers();
+  }
+  else{
+    if(!blockUndoStack.length)return;
+    blockRedoStack.push(blocksSnapshot());
+    restoreBlocksSnapshot(blockUndoStack.pop());
+  }
+  updateHistoryButtons();
   runImmediately();
-
 });
 
-
-document.getElementById("redoBtn").addEventListener("click",()=>{
-
-  if(!redoStack.length)return;
-
-  undoStack.push(editor.value);
-
-  editor.value=redoStack.pop();
-  previousEditorValue=editor.value;
-
-  updateLineNumbers();
+byId("redoBtn").addEventListener("click",()=>{
+  if(activeMode==="python"){
+    if(!pythonRedoStack.length)return;
+    pythonUndoStack.push(editor.value);
+    editor.value=pythonRedoStack.pop();
+    previousEditorValue=editor.value;
+    updateLineNumbers();
+  }
+  else{
+    if(!blockRedoStack.length)return;
+    blockUndoStack.push(blocksSnapshot());
+    restoreBlocksSnapshot(blockRedoStack.pop());
+  }
   updateHistoryButtons();
-
   runImmediately();
-
 });
 
-
-/* EDITOR */
+/* PYTHON EDITOR */
 
 editor.addEventListener("input",()=>{
-
-  recordChange(previousEditorValue);
-
+  recordPythonChange(previousEditorValue);
   previousEditorValue=editor.value;
-
   updateLineNumbers();
-
-  scheduleLiveRun();
-
+  if(activeMode==="python")scheduleLiveRun();
 });
-
 
 editor.addEventListener("keydown",event=>{
-
-  if(event.key==="Tab"){
-
-    event.preventDefault();
-
-    const oldValue=editor.value;
-    const start=editor.selectionStart;
-    const end=editor.selectionEnd;
-
-    editor.value=
-      oldValue.slice(0,start)+
-      "    "+
-      oldValue.slice(end);
-
-    editor.selectionStart=
-      editor.selectionEnd=
-        start+4;
-
-    recordChange(oldValue);
-
-    previousEditorValue=editor.value;
-
-    updateLineNumbers();
-
-    scheduleLiveRun();
-
-  }
-
-});
-
-
-/* INSERT COMMAND */
-
-function insertCommand(command){
-
+  if(event.key!=="Tab")return;
+  event.preventDefault();
   const oldValue=editor.value;
-
   const start=editor.selectionStart;
   const end=editor.selectionEnd;
+  editor.value=oldValue.slice(0,start)+"    "+oldValue.slice(end);
+  editor.selectionStart=editor.selectionEnd=start+4;
+  recordPythonChange(oldValue);
+  previousEditorValue=editor.value;
+  updateLineNumbers();
+  if(activeMode==="python")scheduleLiveRun();
+});
 
+function insertCommand(command){
+  const oldValue=editor.value;
+  const start=editor.selectionStart;
+  const end=editor.selectionEnd;
   const before=oldValue.slice(0,start);
   const after=oldValue.slice(end);
-
-  const prefix=
-    before.length &&
-    !before.endsWith("\n")
-      ?"\n"
-      :"";
-
-  const addition=
-    prefix+
-    command+
-    "\n";
-
-  editor.value=
-    before+
-    addition+
-    after;
-
-  const cursor=
-    before.length+
-    addition.length;
-
-  editor.selectionStart=
-    editor.selectionEnd=
-      cursor;
-
+  const prefix=before.length && !before.endsWith("\n")?"\n":"";
+  const addition=prefix+command+"\n";
+  editor.value=before+addition+after;
+  const cursor=before.length+addition.length;
+  editor.selectionStart=editor.selectionEnd=cursor;
   editor.focus();
-
-  recordChange(oldValue);
-
+  recordPythonChange(oldValue);
   previousEditorValue=editor.value;
-
   updateLineNumbers();
-
-  runImmediately();
-
+  if(activeMode==="python")runImmediately();
 }
 
-
-/* CHEAT BOX */
+/* PYTHON OPTION CHOOSERS */
 
 function showColorChooser(type){
-
-  const box=document.getElementById("cheatBox");
-  const title=document.getElementById("cheatTitle");
-  const body=document.getElementById("cheatBody");
-
-  title.textContent="Color Options";
+  const box=byId("cheatBox");
+  byId("cheatTitle").textContent="Color Options";
+  const body=byId("cheatBody");
   body.innerHTML="";
-
   const grid=document.createElement("div");
   grid.className="cheat-grid";
 
   colorNames.forEach(name=>{
-
     const button=document.createElement("button");
-
     button.className="cheat-item";
-
-    button.innerHTML=
-      '<span class="dot" style="background:'+
-      colors[name]+
-      '"></span>'+
-      '<span>Color.'+
-      name+
-      '</span>';
-
-    button.addEventListener("click",()=>{
-
-      insertCommand(
-        "brain.screen.set_"+
-        type+
-        "_color(Color."+
-        name+
-        ")"
-      );
-
-    });
-
+    const dot=document.createElement("span");
+    dot.className="dot";
+    setColorPreview(dot,name);
+    const label=document.createElement("span");
+    label.textContent="Color."+name;
+    button.append(dot,label);
+    button.addEventListener("click",()=>insertCommand("brain.screen.set_"+type+"_color(Color."+name+")"));
     grid.appendChild(button);
-
   });
 
   body.appendChild(grid);
-
-  const sep=document.createElement("div");
-  sep.className="cheat-sep";
-  body.appendChild(sep);
-
-  const foot=document.createElement("div");
-  foot.className="cheat-foot";
-  foot.textContent="Click a color to insert that command.";
-  body.appendChild(foot);
-
+  addChooserFoot(body,"Click a color to insert that command.");
   box.style.display="block";
-
 }
 
-
 function showFontChooser(){
-
-  const box=document.getElementById("cheatBox");
-  const title=document.getElementById("cheatTitle");
-  const body=document.getElementById("cheatBody");
-
-  title.textContent="Font Type Options";
+  const box=byId("cheatBox");
+  byId("cheatTitle").textContent="Font Type Options";
+  const body=byId("cheatBody");
   body.innerHTML="";
-
   const list=document.createElement("div");
   list.className="font-list";
 
   Object.keys(fonts).forEach(name=>{
-
     const button=document.createElement("button");
-
     button.className="font-item";
-
-    button.textContent=
-      "FontType."+
-      name;
-
-    button.addEventListener("click",()=>{
-
-      insertCommand(
-        "brain.screen.set_font(FontType."+
-        name+
-        ")"
-      );
-
-    });
-
+    button.textContent="FontType."+name;
+    button.addEventListener("click",()=>insertCommand("brain.screen.set_font(FontType."+name+")"));
     list.appendChild(button);
-
   });
 
   body.appendChild(list);
+  addChooserFoot(body,"Click a font type to insert that command.");
+  box.style.display="block";
+}
 
+function addChooserFoot(body,text){
   const sep=document.createElement("div");
   sep.className="cheat-sep";
-  body.appendChild(sep);
-
   const foot=document.createElement("div");
   foot.className="cheat-foot";
-  foot.textContent="Click a font type to insert that command.";
-  body.appendChild(foot);
-
-  box.style.display="block";
-
+  foot.textContent=text;
+  body.append(sep,foot);
 }
 
+byId("cheatClose").addEventListener("click",()=>{byId("cheatBox").style.display="none";});
 
 document.querySelectorAll(".command").forEach(button=>{
-
   button.addEventListener("click",()=>{
-
     insertCommand(button.dataset.code);
-
-    if(button.dataset.special==="font"){
-      showFontChooser();
-    }
-
-    if(button.dataset.special==="pen"){
-      showColorChooser("pen");
-    }
-
-    if(button.dataset.special==="fill"){
-      showColorChooser("fill");
-    }
-
+    if(button.dataset.special==="font")showFontChooser();
+    if(button.dataset.special==="pen")showColorChooser("pen");
+    if(button.dataset.special==="fill")showColorChooser("fill");
   });
-
 });
 
+/* BLOCK WORKSPACE */
 
-/* SCREEN */
+document.querySelectorAll(".palette-block").forEach(button=>{
+  button.addEventListener("click",()=>addBlock(button.dataset.block));
+});
 
-function clearBuffer(){
-
-  bctx.fillStyle="#000000";
-  bctx.fillRect(0,0,480,240);
-
+function addBlock(type){
+  const block=makeBlock(type);
+  if(!block)return;
+  const old=blocksSnapshot();
+  blockProgram.push(block);
+  recordBlockChange(old);
+  renderBlockProgram();
+  if(activeMode==="blocks")runImmediately();
+  blockProgramElement.lastElementChild?.scrollIntoView({block:"nearest",behavior:"smooth"});
 }
 
-
-function drawGrid(context,columns,rows){
-
-  const cellWidth=480/columns;
-  const cellHeight=240/rows;
-
-  context.save();
-
-  context.strokeStyle="rgba(255,255,255,.24)";
-  context.lineWidth=1;
-
-  context.beginPath();
-
-  for(let column=0;column<=columns;column++){
-
-    const x=column*cellWidth;
-
-    context.moveTo(x+.5,0);
-    context.lineTo(x+.5,240);
-
-  }
-
-  for(let row=0;row<=rows;row++){
-
-    const y=row*cellHeight;
-
-    context.moveTo(0,y+.5);
-    context.lineTo(480,y+.5);
-
-  }
-
-  context.stroke();
-  context.restore();
-
+function addLabel(parent,text){
+  const span=document.createElement("span");
+  span.className="block-label";
+  span.textContent=text;
+  parent.appendChild(span);
 }
 
-
-function drawVisibleScreen(){
-
-  ctx.clearRect(0,0,480,240);
-  ctx.drawImage(buffer,0,0);
-
-  if(practiceGrid==="DRAW30"){
-
-    drawGrid(ctx,16,8);
-
-  }
-  else if(fonts[practiceGrid]){
-
-    const font=fonts[practiceGrid];
-
-    drawGrid(
-      ctx,
-      font.cols,
-      font.rows
-    );
-
+function addBlockInput(parent,block,key,{type="number",label=key,min=-999,max=999}={}){
+  const input=document.createElement("input");
+  input.className="block-input"+(type==="text"?" text-input":"");
+  input.type=type;
+  input.value=block.args[key];
+  input.setAttribute("aria-label",label);
+  if(type==="number"){
+    input.min=min;
+    input.max=max;
+    input.step="1";
   }
 
-}
-
-
-/* AXIS LABELS */
-
-function buildAxes(){
-
-  const xAxis=document.getElementById("xAxis");
-  const yAxis=document.getElementById("yAxis");
-
-  xAxis.innerHTML="";
-  yAxis.innerHTML="";
-
-  if(!practiceGrid)return;
-
-
-  if(practiceGrid==="DRAW30"){
-
-    for(let x=0;x<=480;x+=30){
-
-      const span=document.createElement("span");
-
-      span.textContent=x;
-
-      span.style.left=
-        (x/480*100)+"%";
-
-      if(x===0){
-        span.style.transform="translateX(0)";
-      }
-
-      if(x===480){
-        span.style.transform="translateX(-100%)";
-      }
-
-      xAxis.appendChild(span);
-
-    }
-
-
-    for(let y=0;y<=240;y+=30){
-
-      const span=document.createElement("span");
-
-      span.textContent=y;
-
-      span.style.top=
-        (y/240*100)+"%";
-
-      if(y===0){
-        span.style.transform="translateY(0)";
-      }
-
-      if(y===240){
-        span.style.transform="translateY(-100%)";
-      }
-
-      yAxis.appendChild(span);
-
-    }
-
-    return;
-
-  }
-
-
-  const font=fonts[practiceGrid];
-
-  const step=
-    font.cols>50
-      ?10
-      :5;
-
-  const marks=[1];
-
-  for(
-    let column=step;
-    column<=font.cols;
-    column+=step
-  ){
-    marks.push(column);
-  }
-
-  if(!marks.includes(font.cols)){
-    marks.push(font.cols);
-  }
-
-
-  [...new Set(marks)].forEach(column=>{
-
-    const span=document.createElement("span");
-
-    span.textContent=column;
-
-    span.style.left=
-      (
-        (column-1)/
-        Math.max(1,font.cols-1)
-      )*
-      100+
-      "%";
-
-    xAxis.appendChild(span);
-
+  let editStart="";
+  const begin=()=>{if(!editStart)editStart=blocksSnapshot();};
+  input.addEventListener("focus",begin);
+  input.addEventListener("pointerdown",begin);
+  input.addEventListener("input",()=>{
+    block.args[key]=type==="number"?numberValue(input.value):input.value;
+    if(activeMode==="blocks")scheduleLiveRun();
   });
-
-
-  for(let row=1;row<=font.rows;row++){
-
-    const span=document.createElement("span");
-
-    span.textContent=row;
-
-    span.style.top=
-      (
-        (row-1)/
-        Math.max(1,font.rows-1)
-      )*
-      100+
-      "%";
-
-    yAxis.appendChild(span);
-
-  }
-
+  input.addEventListener("change",()=>{
+    block.args[key]=type==="number"?numberValue(input.value):input.value;
+    if(editStart)recordBlockChange(editStart);
+    editStart="";
+    if(activeMode==="blocks")runImmediately();
+  });
+  parent.appendChild(input);
 }
 
-
-/* TEXT */
-
-function printText(text){
-
-  const font=fonts[state.font];
-
-  const cellWidth=480/font.cols;
-  const cellHeight=240/font.rows;
-
-  const x=(state.col-1)*cellWidth;
-  const y=(state.row-1)*cellHeight;
-
-  bctx.fillStyle=colors[state.pen];
-  bctx.textBaseline="top";
-
-  bctx.font=
-    font.prop
-      ?font.size+"px Arial"
-      :font.size+
-       'px Consolas,"Courier New",monospace';
-
-  bctx.fillText(text,x,y);
-
-  state.col=
-    Math.min(
-      font.cols,
-      state.col+
-      text.length
-    );
-
+function addBlockSelect(parent,block,key,items,label){
+  const select=document.createElement("select");
+  select.className="block-select";
+  select.setAttribute("aria-label",label);
+  items.forEach(item=>{
+    const option=document.createElement("option");
+    option.value=item;
+    option.textContent=item;
+    select.appendChild(option);
+  });
+  const desiredValue=String(block.args[key]);
+  select.value=items.map(String).includes(desiredValue)?desiredValue:String(items[0]);
+  block.args[key]=select.value;
+  let editStart="";
+  const begin=()=>{if(!editStart)editStart=blocksSnapshot();};
+  select.addEventListener("focus",begin);
+  select.addEventListener("pointerdown",begin);
+  select.addEventListener("change",()=>{
+    block.args[key]=select.value;
+    if(editStart)recordBlockChange(editStart);
+    editStart="";
+    if(activeMode==="blocks")runImmediately();
+  });
+  parent.appendChild(select);
 }
 
-
-/* INFO */
-
-function updateInfo(){
-
-  document.getElementById("fontInfo").textContent=
-    state.font;
-
-  document.getElementById("cursorInfo").textContent=
-    "Row "+
-    state.row+
-    ", Col "+
-    state.col;
-
-  document.getElementById("colorInfo").textContent=
-    state.pen;
-
-  document.getElementById("colorDot").style.background=
-    colors[state.pen];
-
-  document.getElementById("fillInfo").textContent=
-    state.fill;
-
-  document.getElementById("penWidthInfo").textContent=
-    state.penWidth;
-
-
-  if(practiceGrid==="DRAW30"){
-
-    document.getElementById("gridInfo").textContent=
-      "Drawing — 30 × 30 px";
-
-  }
-  else if(fonts[practiceGrid]){
-
-    const font=fonts[practiceGrid];
-
-    document.getElementById("gridInfo").textContent=
-      practiceGrid+
-      " — "+
-      font.cols+
-      " × "+
-      font.rows;
-
-  }
-  else{
-
-    document.getElementById("gridInfo").textContent=
-      "Off";
-
-  }
-
-  buildAxes();
-
+function numberValue(value){
+  const number=Number(value);
+  return Number.isFinite(number)?Math.round(number):0;
 }
 
+function renderBlockContents(element,block){
+  switch(block.type){
+    case "print":
+      addLabel(element,"print");
+      addBlockInput(element,block,"text",{type:"text",label:"text to print"});
+      break;
+    case "setCursor":
+      addLabel(element,"set cursor row");
+      addBlockInput(element,block,"row",{label:"cursor row",min:1,max:20});
+      addLabel(element,"column");
+      addBlockInput(element,block,"col",{label:"cursor column",min:1,max:80});
+      break;
+    case "nextRow":
+      addLabel(element,"next row");
+      break;
+    case "clearRow":
+      addLabel(element,"clear row");
+      addBlockSelect(element,block,"row",rowChoices,"row to clear");
+      break;
+    case "rowQuery":
+      addLabel(element,"cursor row");
+      break;
+    case "columnQuery":
+      addLabel(element,"cursor column");
+      break;
+    case "clearScreen":
+      addLabel(element,"clear screen");
+      break;
+    case "setFont":
+      addLabel(element,"set font");
+      addBlockSelect(element,block,"font",Object.keys(fonts),"font type");
+      break;
+    case "setPenWidth":
+      addLabel(element,"set pen width");
+      addBlockInput(element,block,"width",{label:"pen width",min:1,max:100});
+      break;
+    case "setPenColor":
+      addLabel(element,"set pen color");
+      addBlockSelect(element,block,"color",colorNames,"pen color");
+      break;
+    case "setFillColor":
+      addLabel(element,"set fill color");
+      addBlockSelect(element,block,"color",colorNames,"fill color");
+      break;
+    case "drawPixel":
+      addLabel(element,"draw pixel x");
+      addBlockInput(element,block,"x",{label:"x coordinate",min:-480,max:960});
+      addLabel(element,"y");
+      addBlockInput(element,block,"y",{label:"y coordinate",min:-240,max:480});
+      break;
+    case "drawLine":
+      addLabel(element,"draw line x1");
+      addBlockInput(element,block,"x1",{label:"start x",min:-480,max:960});
+      addLabel(element,"y1");
+      addBlockInput(element,block,"y1",{label:"start y",min:-240,max:480});
+      addLabel(element,"x2");
+      addBlockInput(element,block,"x2",{label:"end x",min:-480,max:960});
+      addLabel(element,"y2");
+      addBlockInput(element,block,"y2",{label:"end y",min:-240,max:480});
+      break;
+    case "drawRectangle":
+      addLabel(element,"draw rectangle x");
+      addBlockInput(element,block,"x",{label:"x coordinate",min:-480,max:960});
+      addLabel(element,"y");
+      addBlockInput(element,block,"y",{label:"y coordinate",min:-240,max:480});
+      addLabel(element,"width");
+      addBlockInput(element,block,"width",{label:"rectangle width",min:0,max:960});
+      addLabel(element,"height");
+      addBlockInput(element,block,"height",{label:"rectangle height",min:0,max:480});
+      break;
+    case "drawCircle":
+      addLabel(element,"draw circle center x");
+      addBlockInput(element,block,"x",{label:"center x",min:-480,max:960});
+      addLabel(element,"y");
+      addBlockInput(element,block,"y",{label:"center y",min:-240,max:480});
+      addLabel(element,"radius");
+      addBlockInput(element,block,"radius",{label:"circle radius",min:0,max:480});
+      break;
+  }
+}
 
-/* CODE ENGINE */
+function renderBlockProgram(){
+  blockProgramElement.innerHTML="";
+  byId("blockCount").textContent=blockProgram.length+" "+(blockProgram.length===1?"block":"blocks");
 
-function runCode(){
+  if(!blockProgram.length){
+    const empty=document.createElement("div");
+    empty.className="empty-blocks";
+    empty.innerHTML="Choose a Screen block from the left.<br>Your Blocks program is separate from your Python program.";
+    blockProgramElement.appendChild(empty);
+    return;
+  }
 
-  state=defaultState();
+  blockProgram.forEach((block,index)=>{
+    const element=document.createElement("div");
+    element.className="program-block "+blockCategories[block.type];
+    element.dataset.blockId=block.id;
 
-  clearBuffer();
+    const handle=document.createElement("span");
+    handle.className="drag-handle";
+    handle.textContent="⠿";
+    handle.title="Drag to reorder";
+    handle.addEventListener("pointerdown",()=>{element.draggable=true;});
+    element.appendChild(handle);
 
-  const errors=[];
+    renderBlockContents(element,block);
 
+    const actions=document.createElement("span");
+    actions.className="block-actions";
 
-  editor.value
-    .split("\n")
-    .forEach((raw,index)=>{
+    const up=makeBlockAction("▲","Move block up",index===0,()=>moveBlock(index,index-1));
+    const down=makeBlockAction("▼","Move block down",index===blockProgram.length-1,()=>moveBlock(index,index+1));
+    const remove=makeBlockAction("×","Delete block",false,()=>removeBlock(index));
+    actions.append(up,down,remove);
+    element.appendChild(actions);
 
-      const line=raw.trim();
-      const lineNumber=index+1;
-
-      if(
-        !line ||
-        line.startsWith("#") ||
-        line==="from vex import *" ||
-        /^brain\s*=\s*Brain\s*\(\s*\)$/.test(line)
-      ){
+    element.addEventListener("dragstart",event=>{
+      if(event.target.closest("input,select,button")){
+        event.preventDefault();
         return;
       }
-
-      let match;
-
-
-      match=line.match(
-        /^brain\.screen\.set_font\(FontType\.(MONO12|MONO15|MONO20|MONO30|MONO40|MONO60|PROP20|PROP30|PROP40|PROP60)\)$/
-      );
-
-      if(match){
-        state.font=match[1];
-        return;
-      }
-
-
-      match=line.match(
-        /^brain\.screen\.set_cursor\((\d+)\s*,\s*(\d+)\)$/
-      );
-
-      if(match){
-
-        const font=fonts[state.font];
-
-        state.row=
-          Math.max(
-            1,
-            Math.min(
-              font.rows,
-              Number(match[1])
-            )
-          );
-
-        state.col=
-          Math.max(
-            1,
-            Math.min(
-              font.cols,
-              Number(match[2])
-            )
-          );
-
-        return;
-
-      }
-
-
-      match=line.match(
-        /^brain\.screen\.print\((["'])(.*?)\1\)$/
-      );
-
-      if(match){
-        printText(match[2]);
-        return;
-      }
-
-
-      if(/^brain\.screen\.next_row\(\)$/.test(line)){
-
-        const font=fonts[state.font];
-
-        state.row=
-          Math.min(
-            font.rows,
-            state.row+1
-          );
-
-        state.col=1;
-
-        return;
-
-      }
-
-
-      if(/^brain\.screen\.clear_screen\(\)$/.test(line)){
-
-        clearBuffer();
-
-        state.row=1;
-        state.col=1;
-
-        return;
-
-      }
-
-
-      match=line.match(
-        /^brain\.screen\.clear_row\((\d+)\)$/
-      );
-
-      if(match){
-
-        const font=fonts[state.font];
-        const rowHeight=240/font.rows;
-
-        bctx.fillStyle="#000000";
-
-        bctx.fillRect(
-          0,
-          (Number(match[1])-1)*rowHeight,
-          480,
-          rowHeight
-        );
-
-        return;
-
-      }
-
-
-      match=line.match(
-        /^brain\.screen\.set_pen_width\((\d+)\)$/
-      );
-
-      if(match){
-
-        state.penWidth=
-          Math.max(
-            1,
-            Number(match[1])
-          );
-
-        return;
-
-      }
-
-
-      match=line.match(
-        /^brain\.screen\.set_pen_color\(Color\.([A-Z]+)\)$/
-      );
-
-      if(match && colors[match[1]]){
-
-        state.pen=match[1];
-
-        return;
-
-      }
-
-
-      match=line.match(
-        /^brain\.screen\.set_fill_color\(Color\.([A-Z]+)\)$/
-      );
-
-      if(match && colors[match[1]]){
-
-        state.fill=match[1];
-
-        return;
-
-      }
-
-
-      if(
-        /^brain\.screen\.(row|column)\(\)$/.test(line)
-      ){
-        return;
-      }
-
-
-      match=line.match(
-        /^brain\.screen\.draw_pixel\(([-\d]+)\s*,\s*([-\d]+)\)$/
-      );
-
-      if(match){
-
-        bctx.fillStyle=
-          colors[state.pen];
-
-        bctx.fillRect(
-          Number(match[1]),
-          Number(match[2]),
-          Math.max(1,state.penWidth),
-          Math.max(1,state.penWidth)
-        );
-
-        return;
-
-      }
-
-
-      match=line.match(
-        /^brain\.screen\.draw_line\(([-\d]+)\s*,\s*([-\d]+)\s*,\s*([-\d]+)\s*,\s*([-\d]+)\)$/
-      );
-
-      if(match){
-
-        bctx.strokeStyle=
-          colors[state.pen];
-
-        bctx.lineWidth=
-          state.penWidth;
-
-        bctx.beginPath();
-
-        bctx.moveTo(
-          Number(match[1]),
-          Number(match[2])
-        );
-
-        bctx.lineTo(
-          Number(match[3]),
-          Number(match[4])
-        );
-
-        bctx.stroke();
-
-        return;
-
-      }
-
-
-      match=line.match(
-        /^brain\.screen\.draw_rectangle\(([-\d]+)\s*,\s*([-\d]+)\s*,\s*([-\d]+)\s*,\s*([-\d]+)\)$/
-      );
-
-      if(match){
-
-        bctx.fillStyle=
-          colors[state.fill];
-
-        bctx.strokeStyle=
-          colors[state.pen];
-
-        bctx.lineWidth=
-          state.penWidth;
-
-        bctx.fillRect(
-          Number(match[1]),
-          Number(match[2]),
-          Number(match[3]),
-          Number(match[4])
-        );
-
-        bctx.strokeRect(
-          Number(match[1]),
-          Number(match[2]),
-          Number(match[3]),
-          Number(match[4])
-        );
-
-        return;
-
-      }
-
-
-      match=line.match(
-        /^brain\.screen\.draw_circle\(([-\d]+)\s*,\s*([-\d]+)\s*,\s*([-\d]+)\)$/
-      );
-
-      if(match){
-
-        bctx.beginPath();
-
-        bctx.arc(
-          Number(match[1]),
-          Number(match[2]),
-          Number(match[3]),
-          0,
-          Math.PI*2
-        );
-
-        bctx.fillStyle=
-          colors[state.fill];
-
-        bctx.strokeStyle=
-          colors[state.pen];
-
-        bctx.lineWidth=
-          state.penWidth;
-
-        bctx.fill();
-        bctx.stroke();
-
-        return;
-
-      }
-
-
-      errors.push(
-        "Line "+
-        lineNumber+
-        ": Command not recognized."
-      );
-
+      draggedBlockId=block.id;
+      dragStartSnapshot=blocksSnapshot();
+      element.classList.add("dragging");
+      event.dataTransfer.effectAllowed="move";
+      event.dataTransfer.setData("text/plain",block.id);
     });
 
+    element.addEventListener("dragend",()=>{
+      element.draggable=false;
+      element.classList.remove("dragging");
+      document.querySelectorAll(".program-block").forEach(item=>item.classList.remove("drag-over"));
+      syncBlockOrderFromDom();
+      draggedBlockId=null;
+    });
 
+    blockProgramElement.appendChild(element);
+  });
+}
+
+function makeBlockAction(text,label,disabled,action){
+  const button=document.createElement("button");
+  button.className="block-action";
+  button.type="button";
+  button.textContent=text;
+  button.title=label;
+  button.setAttribute("aria-label",label);
+  button.disabled=disabled;
+  button.addEventListener("click",action);
+  return button;
+}
+
+function moveBlock(from,to){
+  if(to<0 || to>=blockProgram.length)return;
+  const old=blocksSnapshot();
+  const [block]=blockProgram.splice(from,1);
+  blockProgram.splice(to,0,block);
+  recordBlockChange(old);
+  renderBlockProgram();
+  if(activeMode==="blocks")runImmediately();
+}
+
+function removeBlock(index){
+  const old=blocksSnapshot();
+  blockProgram.splice(index,1);
+  recordBlockChange(old);
+  renderBlockProgram();
+  if(activeMode==="blocks")runImmediately();
+}
+
+blockProgramElement.addEventListener("dragover",event=>{
+  if(!draggedBlockId)return;
+  event.preventDefault();
+  const target=event.target.closest(".program-block");
+  document.querySelectorAll(".program-block").forEach(item=>item.classList.remove("drag-over"));
+  if(!target || target.dataset.blockId===draggedBlockId)return;
+  target.classList.add("drag-over");
+  const dragged=blockProgramElement.querySelector('[data-block-id="'+draggedBlockId+'"]');
+  if(!dragged)return;
+  const rect=target.getBoundingClientRect();
+  const after=event.clientY>rect.top+rect.height/2;
+  blockProgramElement.insertBefore(dragged,after?target.nextSibling:target);
+});
+
+blockProgramElement.addEventListener("drop",event=>{
+  if(!draggedBlockId)return;
+  event.preventDefault();
+});
+
+function syncBlockOrderFromDom(){
+  if(!draggedBlockId)return;
+  const ids=[...blockProgramElement.querySelectorAll(".program-block")].map(item=>item.dataset.blockId);
+  const lookup=new Map(blockProgram.map(block=>[block.id,block]));
+  const reordered=ids.map(id=>lookup.get(id)).filter(Boolean);
+  if(reordered.length!==blockProgram.length)return;
+  blockProgram=reordered;
+  recordBlockChange(dragStartSnapshot);
+  dragStartSnapshot="";
+  renderBlockProgram();
+  if(activeMode==="blocks")runImmediately();
+}
+
+byId("clearBlocksBtn").addEventListener("click",()=>{
+  if(!blockProgram.length)return;
+  const old=blocksSnapshot();
+  blockProgram=[];
+  recordBlockChange(old);
+  renderBlockProgram();
+  if(activeMode==="blocks")runImmediately();
+});
+
+/* SCREEN DRAWING */
+
+function clearBuffer(){
+  bctx.fillStyle="#000000";
+  bctx.fillRect(0,0,480,240);
+}
+
+function drawGrid(context,columns,rows){
+  const cellWidth=480/columns;
+  const cellHeight=240/rows;
+  context.save();
+  context.strokeStyle="rgba(255,255,255,.24)";
+  context.lineWidth=1;
+  context.beginPath();
+  for(let column=0;column<=columns;column++){
+    const x=column*cellWidth;
+    context.moveTo(x+.5,0);
+    context.lineTo(x+.5,240);
+  }
+  for(let row=0;row<=rows;row++){
+    const y=row*cellHeight;
+    context.moveTo(0,y+.5);
+    context.lineTo(480,y+.5);
+  }
+  context.stroke();
+  context.restore();
+}
+
+function drawVisibleScreen(){
+  ctx.clearRect(0,0,480,240);
+  ctx.drawImage(buffer,0,0);
+  if(practiceGrid==="DRAW30")drawGrid(ctx,16,8);
+  else if(fonts[practiceGrid])drawGrid(ctx,fonts[practiceGrid].cols,fonts[practiceGrid].rows);
+}
+
+function buildAxes(){
+  const xAxis=byId("xAxis");
+  const yAxis=byId("yAxis");
+  xAxis.innerHTML="";
+  yAxis.innerHTML="";
+  if(!practiceGrid)return;
+
+  if(practiceGrid==="DRAW30"){
+    for(let x=0;x<=480;x+=30){
+      const span=document.createElement("span");
+      span.textContent=x;
+      span.style.left=(x/480*100)+"%";
+      if(x===0)span.style.transform="translateX(0)";
+      if(x===480)span.style.transform="translateX(-100%)";
+      xAxis.appendChild(span);
+    }
+    for(let y=0;y<=240;y+=30){
+      const span=document.createElement("span");
+      span.textContent=y;
+      span.style.top=(y/240*100)+"%";
+      if(y===0)span.style.transform="translateY(0)";
+      if(y===240)span.style.transform="translateY(-100%)";
+      yAxis.appendChild(span);
+    }
+    return;
+  }
+
+  const font=fonts[practiceGrid];
+  const step=font.cols>50?10:5;
+  const marks=[1];
+  for(let column=step;column<=font.cols;column+=step)marks.push(column);
+  if(!marks.includes(font.cols))marks.push(font.cols);
+  [...new Set(marks)].forEach(column=>{
+    const span=document.createElement("span");
+    span.textContent=column;
+    span.style.left=((column-1)/Math.max(1,font.cols-1))*100+"%";
+    xAxis.appendChild(span);
+  });
+  for(let row=1;row<=font.rows;row++){
+    const span=document.createElement("span");
+    span.textContent=row;
+    span.style.top=((row-1)/Math.max(1,font.rows-1))*100+"%";
+    yAxis.appendChild(span);
+  }
+}
+
+function printText(text){
+  const font=fonts[state.font];
+  const cellWidth=480/font.cols;
+  const cellHeight=240/font.rows;
+  const x=(state.col-1)*cellWidth;
+  const y=(state.row-1)*cellHeight;
+  const content=String(text);
+  const characters=Array.from(content);
+
+  bctx.save();
+  bctx.fillStyle=colors[state.pen];
+  bctx.textAlign="left";
+  bctx.textBaseline="alphabetic";
+  bctx.font=font.prop
+    ?font.size+'px Arial,Helvetica,sans-serif'
+    :font.size+'px Consolas,"Courier New",monospace';
+
+  /*
+    VEX cursor columns use fixed character cells, but browser font metrics do
+    not match the Brain's grid. Mono text uses one exact cell advance. Prop
+    text keeps each glyph's natural shape while centering and fitting it inside
+    its own cell, so wide letters cannot spill across the practice grid.
+  */
+  const rowMetrics=bctx.measureText("Mg");
+  const ascent=rowMetrics.actualBoundingBoxAscent || font.size*.78;
+  const descent=rowMetrics.actualBoundingBoxDescent || font.size*.22;
+  const baseline=y+(cellHeight-ascent-descent)/2+ascent;
+
+  if(font.prop){
+    bctx.textAlign="center";
+    const fittedGlyphWidth=cellWidth*.88;
+    characters.forEach((character,index)=>{
+      if(character!==" "){
+        bctx.fillText(
+          character,
+          x+(index+.5)*cellWidth,
+          baseline,
+          fittedGlyphWidth
+        );
+      }
+    });
+  }
+  else{
+    const naturalAdvance=bctx.measureText("M").width || cellWidth;
+    bctx.translate(x,baseline);
+    bctx.scale(cellWidth/naturalAdvance,1);
+    bctx.fillText(content,0,0);
+  }
+
+  bctx.restore();
+  state.col=Math.min(font.cols,state.col+characters.length);
+}
+
+function setCursor(row,col){
+  const font=fonts[state.font];
+  state.row=Math.max(1,Math.min(font.rows,numberValue(row)));
+  state.col=Math.max(1,Math.min(font.cols,numberValue(col)));
+}
+
+function nextRow(){
+  const font=fonts[state.font];
+  state.row=Math.min(font.rows,state.row+1);
+  state.col=1;
+}
+
+function clearRow(row=state.row){
+  const font=fonts[state.font];
+  const requested=row==="CURRENT" || row==="" || row===undefined?state.row:numberValue(row);
+  const target=Math.max(1,Math.min(font.rows,requested));
+  const rowHeight=240/font.rows;
+  bctx.fillStyle="#000000";
+  bctx.fillRect(0,(target-1)*rowHeight,480,rowHeight);
+}
+
+function drawPixel(x,y){
+  bctx.fillStyle=colors[state.pen];
+  bctx.fillRect(numberValue(x),numberValue(y),Math.max(1,state.penWidth),Math.max(1,state.penWidth));
+}
+
+function drawLine(x1,y1,x2,y2){
+  bctx.save();
+  bctx.strokeStyle=colors[state.pen];
+  bctx.lineWidth=state.penWidth;
+  bctx.lineCap="round";
+  bctx.beginPath();
+  bctx.moveTo(numberValue(x1),numberValue(y1));
+  bctx.lineTo(numberValue(x2),numberValue(y2));
+  bctx.stroke();
+  bctx.restore();
+}
+
+function drawRectangle(x,y,width,height){
+  x=numberValue(x);y=numberValue(y);width=numberValue(width);height=numberValue(height);
+  bctx.save();
+  bctx.fillStyle=colors[state.fill];
+  bctx.strokeStyle=colors[state.pen];
+  bctx.lineWidth=state.penWidth;
+  bctx.fillRect(x,y,width,height);
+  bctx.strokeRect(x,y,width,height);
+  bctx.restore();
+}
+
+function drawCircle(x,y,radius){
+  bctx.save();
+  bctx.beginPath();
+  bctx.arc(numberValue(x),numberValue(y),Math.max(0,numberValue(radius)),0,Math.PI*2);
+  bctx.fillStyle=colors[state.fill];
+  bctx.strokeStyle=colors[state.pen];
+  bctx.lineWidth=state.penWidth;
+  bctx.fill();
+  bctx.stroke();
+  bctx.restore();
+}
+
+/* INFORMATION */
+
+function updateInfo(){
+  byId("fontInfo").textContent=state.font;
+  byId("cursorInfo").textContent="Row "+state.row+", Col "+state.col;
+  byId("colorInfo").textContent=state.pen;
+  setColorPreview(byId("colorDot"),state.pen);
+  byId("fillInfo").textContent=state.fill;
+  byId("penWidthInfo").textContent=state.penWidth;
+  byId("modeInfo").textContent=activeMode==="python"?"Python":"Blocks";
+
+  if(practiceGrid==="DRAW30")byId("gridInfo").textContent="Drawing — 30 × 30 px";
+  else if(fonts[practiceGrid])byId("gridInfo").textContent=practiceGrid+" — "+fonts[practiceGrid].cols+" × "+fonts[practiceGrid].rows;
+  else byId("gridInfo").textContent="Off";
+  buildAxes();
+}
+
+function setCompactStatus(text,status){
+  const runStatus=byId("runStatus");
+  runStatus.textContent=text;
+  runStatus.classList.remove("status-live","status-updating","status-error");
+  runStatus.classList.add("status-"+status);
+}
+
+function showCodeCheck(errors){
+  const panel=byId("codeCheck");
+  const list=byId("codeMessage");
+  list.replaceChildren();
+  errors.forEach(error=>{
+    const item=document.createElement("li");
+    item.textContent=error;
+    list.appendChild(item);
+  });
+  panel.hidden=false;
+}
+
+function hideCodeCheck(){
+  byId("codeCheck").hidden=true;
+  byId("codeMessage").replaceChildren();
+}
+
+function showErrorHighlights(errors){
+  pythonErrorLines=activeMode==="python"
+    ?errors.map(error=>Number((error.match(/^Line (\d+):/)||[])[1])).filter(Boolean)
+    :[];
+  blockErrorIndexes=activeMode==="blocks"
+    ?errors.map(error=>Number((error.match(/^Block (\d+):/)||[])[1])).filter(Boolean)
+    :[];
+  updateLineNumbers();
+  [...blockProgramElement.querySelectorAll(".program-block")].forEach((block,index)=>{
+    block.classList.toggle("block-error",blockErrorIndexes.includes(index+1));
+  });
+}
+
+function clearErrorHighlights(){
+  pythonErrorLines=[];
+  blockErrorIndexes=[];
+  updateLineNumbers();
+  blockProgramElement.querySelectorAll(".block-error").forEach(block=>block.classList.remove("block-error"));
+}
+
+function finishRun(errors){
   updateInfo();
   drawVisibleScreen();
 
-
   if(errors.length){
-
-    document.getElementById("codeMessage").innerHTML=
-      errors.join("<br>");
-
-    document.getElementById("runStatus").textContent=
-      "Code Error";
-
-    document.getElementById("editorStatus").textContent=
-      "Error";
-
-    document.getElementById("brainState").textContent=
-      "ERROR";
-
-    document.getElementById("workspaceMessage").textContent=
-      "Check the code message on the right.";
-
+    showCodeCheck(errors);
+    showErrorHighlights(errors);
+    setCompactStatus("Code Error","error");
+    byId("brainState").textContent="ERROR";
+    byId(activeMode==="python"?"pythonStatus":"blocksStatus").textContent="Error";
+    byId("workspaceMessage").textContent=activeMode==="python"
+      ?"Fix the highlighted line number, then the screen will update automatically."
+      :"Fix the highlighted block, then the screen will update automatically.";
   }
   else{
-
-    document.getElementById("codeMessage").textContent=
-      "✓ Screen updated automatically.";
-
-    document.getElementById("runStatus").textContent=
-      "Live";
-
-    document.getElementById("editorStatus").textContent=
-      "Live";
-
-    document.getElementById("brainState").textContent=
-      "LIVE";
-
-    document.getElementById("workspaceMessage").textContent=
-      "The Brain screen updates automatically as you code.";
-
+    hideCodeCheck();
+    clearErrorHighlights();
+    setCompactStatus("Live","live");
+    byId("brainState").textContent="LIVE";
+    byId(activeMode==="python"?"pythonStatus":"blocksStatus").textContent="Live";
+    byId("workspaceMessage").textContent=activeMode==="python"?"The Brain screen updates automatically as you code.":"The Brain screen updates automatically as you change blocks.";
   }
-
+  scheduleAutosave();
 }
 
+/* PROGRAM ENGINES */
 
-/* NEW */
+function runActiveProgram(){
+  if(activeMode==="python")runPythonProgram();
+  else runBlocksProgram();
+}
 
-document.getElementById("newBtn").addEventListener("click",()=>{
+function beginProgram(){
+  state=defaultState();
+  clearBuffer();
+}
 
-  projectName.value="My Brain Text";
+const supportedScreenMethods=[
+  "print","set_cursor","next_row","clear_row","row","column",
+  "clear_screen","set_font","set_pen_width","set_pen_color",
+  "set_fill_color","draw_pixel","draw_line","draw_rectangle","draw_circle"
+];
 
-  editor.value=starterCode();
-  previousEditorValue=editor.value;
+function editDistance(first,second){
+  const rows=Array.from({length:second.length+1},(_,row)=>[row]);
+  for(let column=0;column<=first.length;column++)rows[0][column]=column;
+  for(let row=1;row<=second.length;row++){
+    for(let column=1;column<=first.length;column++){
+      rows[row][column]=second[row-1]===first[column-1]
+        ?rows[row-1][column-1]
+        :1+Math.min(rows[row-1][column],rows[row][column-1],rows[row-1][column-1]);
+    }
+  }
+  return rows[second.length][first.length];
+}
 
-  undoStack=[];
-  redoStack=[];
+function nearestScreenMethod(method){
+  return supportedScreenMethods
+    .map(name=>({name,distance:editDistance(method,name)}))
+    .sort((first,second)=>first.distance-second.distance)[0];
+}
 
-  practiceGrid="";
+function explainPythonError(line,lineNumber){
+  const prefix="Line "+lineNumber+": ";
 
-  gridBtn.textContent="Grid: Off";
+  if(/^(for|while|if|elif|else|def)\b/.test(line)){
+    return prefix+"Loops, conditions, and functions are not supported in this Screen practice simulator yet.";
+  }
+  if(/^[A-Za-z_]\w*\s*=/.test(line)){
+    return prefix+"Variables are not supported yet. Use a Screen command directly.";
+  }
+  if(!line.startsWith("brain.screen.")){
+    return prefix+'Start Screen commands with "brain.screen."';
+  }
+  if(!line.endsWith(")")){
+    return prefix+"A closing parenthesis is missing.";
+  }
 
-  document.querySelectorAll(".grid-option").forEach(button=>{
-    button.classList.remove("active");
+  const methodMatch=line.match(/^brain\.screen\.([A-Za-z_][A-Za-z0-9_]*)/);
+  const method=methodMatch?methodMatch[1]:"";
+  if(method && !supportedScreenMethods.includes(method)){
+    const nearest=nearestScreenMethod(method);
+    return prefix+'Unknown Screen command "'+method+'".'+
+      (nearest && nearest.distance<=4?' Did you mean "'+nearest.name+'"?':"");
+  }
+
+  if(/set_(pen|fill)_color\(\s*(?!Color\.)/.test(line)){
+    return prefix+"Write colors like Color.RED or Color.TRANSPARENT.";
+  }
+  const colorMatch=line.match(/Color\.([A-Za-z_]+)/);
+  if(colorMatch && colorMatch[1]!==colorMatch[1].toUpperCase()){
+    return prefix+"Color names must be uppercase, such as Color."+colorMatch[1].toUpperCase()+".";
+  }
+  if(colorMatch && !colors[colorMatch[1]]){
+    return prefix+'"Color.'+colorMatch[1]+'" is not available in this simulator.';
+  }
+  if(method==="clear_row"){
+    return prefix+"Use clear_row() for the current row or clear_row(3) for a specific row.";
+  }
+  if(method==="print"){
+    return prefix+'print() currently needs text inside matching quotes, such as print("Hello").';
+  }
+  if(method==="set_font"){
+    return prefix+"Choose a listed FontType, such as FontType.MONO20.";
+  }
+  if(method.startsWith("draw_")){
+    return prefix+"Check the number of coordinates and separate each number with a comma.";
+  }
+  return prefix+"Check the command spelling, parentheses, commas, and values.";
+}
+
+function runPythonProgram(){
+  beginProgram();
+  const errors=[];
+
+  editor.value.split("\n").forEach((raw,index)=>{
+    const line=raw.trim();
+    const lineNumber=index+1;
+    if(!line || line.startsWith("#") || line==="from vex import *" || /^brain\s*=\s*Brain\s*\(\s*\)$/.test(line))return;
+
+    let match=line.match(/^brain\.screen\.set_font\(FontType\.(MONO12|MONO15|MONO20|MONO30|MONO40|MONO60|PROP20|PROP30|PROP40|PROP60)\)$/);
+    if(match){state.font=match[1];return;}
+
+    match=line.match(/^brain\.screen\.set_cursor\(([-\d]+)\s*,\s*([-\d]+)\)$/);
+    if(match){setCursor(match[1],match[2]);return;}
+
+    match=line.match(/^brain\.screen\.print\((['"])(.*?)\1\)$/);
+    if(match){printText(match[2].replace(/\\n/g,"\n").replace(/\\t/g,"\t"));return;}
+
+    if(/^brain\.screen\.next_row\(\)$/.test(line)){nextRow();return;}
+    if(/^brain\.screen\.clear_screen\(\)$/.test(line)){clearBuffer();state.row=1;state.col=1;return;}
+
+    match=line.match(/^brain\.screen\.clear_row\(\s*([-\d]+)?\s*\)$/);
+    if(match){clearRow(match[1]);return;}
+
+    match=line.match(/^brain\.screen\.set_pen_width\(([-\d]+)\)$/);
+    if(match){state.penWidth=Math.max(1,numberValue(match[1]));return;}
+
+    match=line.match(/^brain\.screen\.set_pen_color\(Color\.([A-Z]+)\)$/);
+    if(match && colors[match[1]]){state.pen=match[1];return;}
+
+    match=line.match(/^brain\.screen\.set_fill_color\(Color\.([A-Z]+)\)$/);
+    if(match && colors[match[1]]){state.fill=match[1];return;}
+
+    if(/^brain\.screen\.(row|column)\(\)$/.test(line))return;
+
+    match=line.match(/^brain\.screen\.draw_pixel\(([-\d]+)\s*,\s*([-\d]+)\)$/);
+    if(match){drawPixel(match[1],match[2]);return;}
+
+    match=line.match(/^brain\.screen\.draw_line\(([-\d]+)\s*,\s*([-\d]+)\s*,\s*([-\d]+)\s*,\s*([-\d]+)\)$/);
+    if(match){drawLine(match[1],match[2],match[3],match[4]);return;}
+
+    match=line.match(/^brain\.screen\.draw_rectangle\(([-\d]+)\s*,\s*([-\d]+)\s*,\s*([-\d]+)\s*,\s*([-\d]+)\)$/);
+    if(match){drawRectangle(match[1],match[2],match[3],match[4]);return;}
+
+    match=line.match(/^brain\.screen\.draw_circle\(([-\d]+)\s*,\s*([-\d]+)\s*,\s*([-\d]+)\)$/);
+    if(match){drawCircle(match[1],match[2],match[3]);return;}
+
+    errors.push(explainPythonError(line,lineNumber));
   });
 
-  document
-    .querySelector('.grid-option[data-grid=""]')
-    .classList.add("active");
+  finishRun(errors);
+}
 
-  document.getElementById("cheatBox").style.display="none";
+function runBlocksProgram(){
+  beginProgram();
+  const errors=[];
 
-  document.getElementById("mouseX").textContent="—";
-  document.getElementById("mouseY").textContent="—";
+  blockProgram.forEach((block,index)=>{
+    const args=block.args || {};
+    switch(block.type){
+      case "print": printText(args.text ?? ""); break;
+      case "setCursor": setCursor(args.row,args.col); break;
+      case "nextRow": nextRow(); break;
+      case "clearRow": clearRow(args.row); break;
+      case "rowQuery":
+      case "columnQuery": break;
+      case "clearScreen": clearBuffer();state.row=1;state.col=1;break;
+      case "setFont": if(fonts[args.font])state.font=args.font;break;
+      case "setPenWidth": state.penWidth=Math.max(1,numberValue(args.width));break;
+      case "setPenColor": if(colors[args.color])state.pen=args.color;break;
+      case "setFillColor": if(colors[args.color])state.fill=args.color;break;
+      case "drawPixel": drawPixel(args.x,args.y);break;
+      case "drawLine": drawLine(args.x1,args.y1,args.x2,args.y2);break;
+      case "drawRectangle": drawRectangle(args.x,args.y,args.width,args.height);break;
+      case "drawCircle": drawCircle(args.x,args.y,args.radius);break;
+      default: errors.push("Block "+(index+1)+": Block type not recognized.");
+    }
+  });
 
-  updateLineNumbers();
-  updateHistoryButtons();
+  finishRun(errors);
+}
 
+/* NEW AND EXAMPLES */
+
+byId("newBtn").addEventListener("click",()=>{
+  const startNewProject=window.confirm(
+    "Start a new project?\n\nThis will replace the current Python and Blocks programs in this browser. Choose Cancel if you want to save the project file first."
+  );
+  if(!startNewProject)return;
+
+  applyProjectData({
+    name:"My Brain Screen",
+    activeMode:"python",
+    pythonCode:starterCode(),
+    blocks:[],
+    practiceGrid:""
+  });
+  byId("cheatBox").style.display="none";
+  byId("mouseX").textContent="—";
+  byId("mouseY").textContent="—";
   runImmediately();
-
 });
 
-
-/* EXAMPLE */
-
-document.getElementById("exampleBtn").addEventListener("click",()=>{
-
-  const oldValue=editor.value;
-
-  editor.value=exampleCode();
-
-  recordChange(oldValue);
-
-  previousEditorValue=editor.value;
-
-  updateLineNumbers();
-
+byId("exampleSelect").addEventListener("change",event=>{
+  const exampleName=event.target.value;
+  if(!exampleName)return;
+  if(activeMode==="python"){
+    const old=editor.value;
+    editor.value=exampleCode(exampleName);
+    recordPythonChange(old);
+    previousEditorValue=editor.value;
+    updateLineNumbers();
+  }
+  else{
+    const old=blocksSnapshot();
+    blockProgram=exampleBlocks(exampleName);
+    recordBlockChange(old);
+    renderBlockProgram();
+  }
+  event.target.value="";
   runImmediately();
-
 });
-
 
 /* SAVE / OPEN */
 
 function safeName(){
-
-  return(
-    projectName.value.trim() ||
-    "My Brain Text"
-  ).replace(
-    /[^a-z0-9_-]+/gi,
-    "-"
-  );
-
+  return(projectName.value.trim() || "My Brain Screen").replace(/[^a-z0-9_-]+/gi,"-");
 }
-
 
 function downloadBlob(name,blob){
-
   const url=URL.createObjectURL(blob);
-
   const link=document.createElement("a");
-
   link.href=url;
   link.download=name;
-
   document.body.appendChild(link);
-
   link.click();
   link.remove();
-
-  setTimeout(
-    ()=>URL.revokeObjectURL(url),
-    1000
-  );
-
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 
-
-document.getElementById("saveBtn").addEventListener("click",()=>{
-
-  const data={
-    version:10,
-    name:projectName.value,
-    code:editor.value,
-    practiceGrid:practiceGrid
-  };
-
-  downloadBlob(
-    safeName()+".v5text",
-    new Blob(
-      [JSON.stringify(data,null,2)],
-      {type:"application/json"}
-    )
-  );
-
+byId("saveBtn").addEventListener("click",()=>{
+  downloadBlob(safeName()+".v5screen",new Blob([JSON.stringify(projectData(),null,2)],{type:"application/json"}));
 });
 
-
-document.getElementById("openBtn").addEventListener("click",()=>{
-
+byId("openBtn").addEventListener("click",()=>{
   fileInput.value="";
   fileInput.click();
-
 });
-
 
 fileInput.addEventListener("change",async event=>{
-
   const file=event.target.files[0];
-
   if(!file)return;
-
   try{
-
-    const data=
-      JSON.parse(
-        await file.text()
-      );
-
-    projectName.value=
-      data.name ||
-      "My Brain Text";
-
-    editor.value=
-      data.code ||
-      starterCode();
-
-    previousEditorValue=
-      editor.value;
-
-    practiceGrid=
-      data.practiceGrid ||
-      "";
-
-    document.querySelectorAll(".grid-option").forEach(button=>{
-
-      button.classList.toggle(
-        "active",
-        button.dataset.grid===practiceGrid
-      );
-
-    });
-
-    if(practiceGrid==="DRAW30"){
-
-      gridBtn.textContent="Grid: Drawing";
-
-    }
-    else if(practiceGrid){
-
-      gridBtn.textContent=
-        "Grid: "+
-        practiceGrid;
-
-    }
-    else{
-
-      gridBtn.textContent="Grid: Off";
-
-    }
-
-    undoStack=[];
-    redoStack=[];
-
-    updateLineNumbers();
-    updateHistoryButtons();
-
+    const data=JSON.parse(await file.text());
+    applyProjectData(data);
     runImmediately();
-
   }
   catch{
-
-    document.getElementById("workspaceMessage").textContent=
-      "Could not open project file.";
-
+    byId("workspaceMessage").textContent="Could not open project file.";
+    showCodeCheck(["The selected file is not a valid VEX screen project."]);
+    clearErrorHighlights();
+    setCompactStatus("File Error","error");
   }
-
 });
-
 
 /* PNG */
 
-document.getElementById("pngBtn").addEventListener("click",()=>{
-
+function createScreenExportCanvas(){
   const output=document.createElement("canvas");
-
   output.width=480;
   output.height=240;
+  const graphics=output.getContext("2d");
+  graphics.drawImage(buffer,0,0);
+  if(practiceGrid==="DRAW30")drawGrid(graphics,16,8);
+  else if(fonts[practiceGrid])drawGrid(graphics,fonts[practiceGrid].cols,fonts[practiceGrid].rows);
+  return output;
+}
 
-  const g=output.getContext("2d");
+function roundedRectPath(graphics,x,y,width,height,radius){
+  const r=Math.min(radius,width/2,height/2);
+  graphics.beginPath();
+  graphics.moveTo(x+r,y);
+  graphics.arcTo(x+width,y,x+width,y+height,r);
+  graphics.arcTo(x+width,y+height,x,y+height,r);
+  graphics.arcTo(x,y+height,x,y,r);
+  graphics.arcTo(x,y,x+width,y,r);
+  graphics.closePath();
+}
 
-  g.drawImage(buffer,0,0);
+function drawSnapshotPanel(graphics,x,y,width,height,fill="#ffffff",stroke="#d6dce3",radius=12){
+  roundedRectPath(graphics,x,y,width,height,radius);
+  graphics.fillStyle=fill;
+  graphics.fill();
+  graphics.strokeStyle=stroke;
+  graphics.lineWidth=1;
+  graphics.stroke();
+}
 
-  if(practiceGrid==="DRAW30"){
-
-    drawGrid(g,16,8);
-
+function clippedCanvasText(graphics,text,maxWidth){
+  const value=String(text);
+  if(graphics.measureText(value).width<=maxWidth)return value;
+  let clipped=value;
+  while(clipped.length && graphics.measureText(clipped+"…").width>maxWidth){
+    clipped=clipped.slice(0,-1);
   }
-  else if(fonts[practiceGrid]){
+  return clipped+"…";
+}
 
-    const font=fonts[practiceGrid];
-
-    drawGrid(
-      g,
-      font.cols,
-      font.rows
-    );
-
+function blockSnapshotLine(block){
+  const args=block.args || {};
+  switch(block.type){
+    case "print": return 'print "'+(args.text ?? "")+'"';
+    case "setCursor": return "set cursor row "+args.row+" column "+args.col;
+    case "nextRow": return "next row";
+    case "clearRow": return "clear row "+String(args.row ?? "CURRENT").toLowerCase();
+    case "rowQuery": return "cursor row";
+    case "columnQuery": return "cursor column";
+    case "clearScreen": return "clear screen";
+    case "setFont": return "set font "+args.font;
+    case "setPenWidth": return "set pen width "+args.width;
+    case "setPenColor": return "set pen color "+args.color;
+    case "setFillColor": return "set fill color "+args.color;
+    case "drawPixel": return "draw pixel ("+args.x+", "+args.y+")";
+    case "drawLine": return "draw line ("+args.x1+", "+args.y1+") to ("+args.x2+", "+args.y2+")";
+    case "drawRectangle": return "draw rectangle ("+args.x+", "+args.y+") "+args.width+" × "+args.height;
+    case "drawCircle": return "draw circle ("+args.x+", "+args.y+") radius "+args.radius;
+    default: return "unknown block";
   }
+}
 
+function drawSnapshotInfo(graphics,label,value,x,y,width){
+  drawSnapshotPanel(graphics,x,y,width,64,"#f8fafc","#dbe2ea",8);
+  graphics.fillStyle="#718096";
+  graphics.font="11px Arial,Helvetica,sans-serif";
+  graphics.fillText(label,x+10,y+19);
+  graphics.fillStyle="#20242a";
+  graphics.font="bold 14px Arial,Helvetica,sans-serif";
+  graphics.fillText(clippedCanvasText(graphics,value,width-20),x+10,y+43);
+}
+
+function createProjectSnapshotCanvas(){
+  const output=document.createElement("canvas");
+  output.width=1280;
+  output.height=720;
+  const graphics=output.getContext("2d");
+
+  graphics.fillStyle="#f4f6f8";
+  graphics.fillRect(0,0,output.width,output.height);
+  graphics.fillStyle="#20242a";
+  graphics.font="bold 25px Arial,Helvetica,sans-serif";
+  graphics.fillText(projectName.value.trim() || "My Brain Screen",40,43);
+  graphics.fillStyle="#66717e";
+  graphics.font="13px Arial,Helvetica,sans-serif";
+  graphics.fillText("VEX V5 Screen Simulator • "+(activeMode==="python"?"Python":"Blocks"),40,65);
+
+  drawSnapshotPanel(graphics,40,82,590,598);
+  graphics.fillStyle="#20242a";
+  graphics.font="bold 15px Arial,Helvetica,sans-serif";
+  graphics.fillText(activeMode==="python"?"main.py":"main.blocks",58,112);
+  graphics.fillStyle="#161b22";
+  roundedRectPath(graphics,55,126,560,536,8);
+  graphics.fill();
+
+  const lines=activeMode==="python"
+    ?editor.value.split("\n")
+    :blockProgram.map(blockSnapshotLine);
+  graphics.font='13px Consolas,"Courier New",monospace';
+  const maxLines=29;
+  lines.slice(0,maxLines).forEach((line,index)=>{
+    const y=151+index*17;
+    graphics.fillStyle="#758191";
+    graphics.textAlign="right";
+    graphics.fillText(String(index+1),84,y);
+    graphics.fillStyle="#e7edf4";
+    graphics.textAlign="left";
+    graphics.fillText(clippedCanvasText(graphics,line,505),96,y);
+  });
+  if(lines.length>maxLines){
+    graphics.fillStyle="#aab4bf";
+    graphics.fillText("… "+(lines.length-maxLines)+" more lines",96,649);
+  }
+  if(!lines.length){
+    graphics.fillStyle="#aab4bf";
+    graphics.fillText("No blocks added yet.",96,151);
+  }
+  graphics.textAlign="left";
+
+  drawSnapshotPanel(graphics,650,82,590,340,"#343b42","#1c2126",16);
+  graphics.fillStyle="#ffffff";
+  graphics.font="bold 13px Arial,Helvetica,sans-serif";
+  graphics.fillText("VEX V5 ROBOT BRAIN",674,110);
+  const screen=createScreenExportCanvas();
+  graphics.fillStyle="#080a0c";
+  roundedRectPath(graphics,690,122,510,270,10);
+  graphics.fill();
+  graphics.drawImage(screen,705,137,480,240);
+
+  drawSnapshotPanel(graphics,650,440,590,240);
+  graphics.fillStyle="#20242a";
+  graphics.font="bold 15px Arial,Helvetica,sans-serif";
+  graphics.fillText("Screen Information",670,470);
+  const gridLabel=practiceGrid==="DRAW30"?"Drawing 30 × 30":practiceGrid || "Off";
+  const details=[
+    ["Mode",activeMode==="python"?"Python":"Blocks"],
+    ["Grid",gridLabel],
+    ["Font",state.font],
+    ["Cursor","Row "+state.row+", Col "+state.col],
+    ["Pen",state.pen],
+    ["Fill",state.fill],
+    ["Pen Width",String(state.penWidth)],
+    ["Status",byId("runStatus").textContent]
+  ];
+  details.forEach((detail,index)=>{
+    const column=index%4;
+    const row=Math.floor(index/4);
+    drawSnapshotInfo(graphics,detail[0],detail[1],670+column*140,488+row*78,130);
+  });
+  return output;
+}
+
+byId("snapshotBtn").addEventListener("click",()=>{
+  const output=createProjectSnapshotCanvas();
   output.toBlob(blob=>{
-
-    if(blob){
-
-      downloadBlob(
-        safeName()+".png",
-        blob
-      );
-
-    }
-
+    if(blob)downloadBlob(safeName()+"-project.png",blob);
   },"image/png");
-
 });
-
 
 /* START */
 
-editor.value=starterCode();
-
-previousEditorValue=editor.value;
-
-updateLineNumbers();
-updateHistoryButtons();
-
+const restoredProject=restoreAutosave();
+if(!restoredProject){
+  applyProjectData({
+    name:"My Brain Screen",
+    activeMode:"python",
+    pythonCode:starterCode(),
+    blocks:[],
+    practiceGrid:""
+  });
+}
+autosaveReady=true;
 runImmediately();
+if(restoredProject){
+  byId("workspaceMessage").textContent="Restored your last project saved in this browser.";
+  byId("autosaveInfo").textContent="Restored";
+}
 
+window.addEventListener("beforeunload",saveAutosave);
 </script>
-
 </body>
 </html>
