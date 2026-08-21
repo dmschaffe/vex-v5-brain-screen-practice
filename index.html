@@ -29,8 +29,9 @@
   --code-string:#d12f1b;
   --code-number:#009c3b;
   --code-enum:#e67e22;
-  --workspace-height:max(400px,calc(100vh - 150px));
-  --workspace-height:max(400px,calc(100dvh - 150px));
+  --error-panel-height:0px;
+  --workspace-height:max(400px,calc(100vh - 150px - var(--error-panel-height)));
+  --workspace-height:max(400px,calc(100dvh - 150px - var(--error-panel-height)));
 }
 body{margin:0;background:#f4f6f8;color:var(--ink);font-family:Arial,Helvetica,sans-serif}
 button,input,select,textarea{font:inherit}
@@ -1766,12 +1767,24 @@ function showCodeCheck(errors){
     list.appendChild(item);
   });
   panel.hidden=false;
+  requestAnimationFrame(updateErrorPanelHeight);
 }
 
 function hideCodeCheck(){
   byId("codeCheck").hidden=true;
   byId("codeMessage").replaceChildren();
+  updateErrorPanelHeight();
 }
+
+function updateErrorPanelHeight(){
+  const panel=byId("codeCheck");
+  const height=panel.hidden?0:Math.ceil(panel.getBoundingClientRect().height);
+  document.documentElement.style.setProperty("--error-panel-height",height+"px");
+}
+
+window.addEventListener("resize",()=>{
+  if(!byId("codeCheck").hidden)requestAnimationFrame(updateErrorPanelHeight);
+});
 
 function showErrorHighlights(errors){
   pythonErrorLines=activeMode==="python"
